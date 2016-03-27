@@ -144,7 +144,6 @@ public:
 	// Rebuild the column piece vector when the column resets.
   bool RebuildColumnPieceVector(const rowcount_t rowcount){
 	  if(rowcount != -1) {
-			std::cout << "rowcount: " << rowcount << std::endl;
 		  CheckInitialized();
 		  column_piece_vector_->clear();
 		  for(rowcount_t offset = 0; offset < rowcount; offset += rowGroupSize)  {
@@ -262,6 +261,19 @@ public:
 		  column_piece_vector_->insert(column_piece_vector_->begin() + offset / rowGroupSize,
 				  shared_ptr<ColumnPiece>(new ColumnPiece(column_piece, data_in_memory, in_memory_offset, offset, storage_type, type_info)));
 	  }
+  }
+
+  void PrintColumnPiecesInfo(rowcount_t row_count) const {
+	  std::cout<<"Column name "<<this->attribute().name()<<" type "<<type_info().name()<<std::endl;
+	  for(rowcount_t i = 0; i < row_count; i += rowGroupSize) {
+	  		  if(type_info().type() == INT32){
+	  			  PrintColumnPiece<INT32>(*(column_piece_vector_->at(i / rowGroupSize)));
+	  		  }else if(type_info().type() == DOUBLE){
+	  			  PrintColumnPiece<DOUBLE>(*(column_piece_vector_->at(i / rowGroupSize)));
+	  		  }else if(type_info().type() == INT64){
+	  			  PrintColumnPiece<INT64>(*(column_piece_vector_->at(i / rowGroupSize)));
+	  		  }
+	  	 }
   }
 
 private:
@@ -524,6 +536,13 @@ class View {
       column->ResetFromPlusOffset(*column, offset);
     }
     row_count_ -= (row_count_ < offset ? row_count_ : offset);
+  }
+
+  void PrintViewColumnPieceInfo() const {
+	  std::cout<<this->schema().GetHumanReadableSpecification()<<std::endl;
+	  for(int i=0;i<this->column_count();i++) {
+		  this->column(i).PrintColumnPiecesInfo(this->row_count());
+	  }
   }
 
  private:

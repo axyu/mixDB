@@ -130,6 +130,10 @@ class GroupKeySet {
 
   void Compact() { key_row_set_.Compact(); }
 
+	const BoundSingleSourceProjector* key_projector() {
+		return key_projector_.get();
+	}
+
  private:
   GroupKeySet(const BoundSingleSourceProjector* group_by,
               BufferAllocator* allocator,
@@ -182,7 +186,6 @@ class MeasureAggregateCursor : public BasicCursor {
       const vector<vector<int>>* filter_order,
       vector<const View*> group_vectors,
       Cursor* child) {
-    std::unique_ptr<const BoundSingleSourceProjector> group_by_owner(group_by);
     std::unique_ptr<BufferAllocator> allocator_owner(CHECK_NOTNULL(allocator));
     vector<const View*> group_vectors_owner(group_vectors);
 
@@ -209,8 +212,7 @@ class MeasureAggregateCursor : public BasicCursor {
     PROPAGATE_ON_FAILURE(bound_result_projector);
     TupleSchema result_schema = bound_result_projector->result_schema();
     return Success(
-        new MeasureAggregateCursor(group_by_owner.release(),
-				 												 result_schema,
+        new MeasureAggregateCursor(result_schema,
                                  allocator_owner.release(),  // Takes ownership.
                                  original_allocator,
 				 												 filter_order,
@@ -274,8 +276,7 @@ class MeasureAggregateCursor : public BasicCursor {
 
  private:
   // Takes ownership of the allocator, key, aggregator, and child.
-  MeasureAggregateCursor(const BoundSingleSourceProjector* group_by,
-		       const TupleSchema& result_schema,
+  MeasureAggregateCursor(const TupleSchema& result_schema,
                        BufferAllocator* allocator,
                        BufferAllocator* original_allocator,
 											 const vector<vector<int>>* filter_order,
@@ -288,7 +289,6 @@ class MeasureAggregateCursor : public BasicCursor {
                        const int64 max_unique_keys_in_result,
                        Cursor* child)
       : BasicCursor(result_schema),
-				group_by_(group_by),
         allocator_(allocator),
         original_allocator_(CHECK_NOTNULL(original_allocator)),
 				vector_allocator_(allocator),
@@ -317,8 +317,6 @@ class MeasureAggregateCursor : public BasicCursor {
   // aggregated (there are no rows with equal group by columns).
   // Initializes the result_ to iterate over the aggregation result.
   FailureOrVoid ProcessInput();
-
-  std::unique_ptr<const BoundSingleSourceProjector> group_by_;
 
   // Owned allocator used to allocate the memory.
   // NOTE: it is used by other member objects created by GroupAggregateCursor so
@@ -386,7 +384,7 @@ FailureOrVoid MeasureAggregateCursor::UpdateSelectionVector(const View& view,
     // The column of the fact table.
     // TODO(axyu) I can replace the dimension_row_id in the fact table with the
     // new group vector row_id.
-    const Column& fact_column = view.column(group_by_->source_attribute_position(column_id));
+    const Column& fact_column = view.column(key_->key_projector()->source_attribute_position(column_id));
     //const int64* fact_row_ptr = fact_column.typed_data<INT64>();
     // The column of the dimension table.
     const Column& dimension_column = group_vectors_[column_id]->column(0);
@@ -446,7 +444,7 @@ FailureOrVoid MeasureAggregateCursor::ProcessInput() {
   // process at least one chunk of the input data).
   do {
     // Fetch next block from the input.
-    if (!PREDICT_TRUE(child_.Next(Cursor::kDefaultRowCount, false))) {
+    if (!PREDICT_TRUE(child_.Next(Optimizer::kRowGroupSize, false))) {
       PROPAGATE_ON_FAILURE(child_);
       if (!child_.has_data()) {
         if (child_.is_eos()) {
@@ -621,8 +619,8 @@ class MeasureAggregateOperation : public BasicOperation {
   	ResultView result = ResultView::EOS();
 		ViewCopier view_copier(source_cursor->schema(), false);
 		rowcount_t write_ptr = 0;
-		while((result = source_cursor->Next(Cursor::kDefaultRowCount)).has_data()) {
-			if(!result_block->Reallocate(result.view().row_count())) {
+		while((result = source_cursor->Next(Optimizer::kRowGroupSize)).has_data()) {
+			if(!result_block->Reallocate(result_block->view().row_count() + result.view().row_count())) {
 				THROW(new Exception(ERROR_MEMORY_EXCEEDED,
 				"Couldn't allocate block for group vector's result block"));
 			}

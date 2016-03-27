@@ -287,12 +287,8 @@ rowcount_t ColumnCopierFn(const rowcount_t row_count,
 	      row_count, source.data().as<type>(),
 	      destination->mutable_typed_data<type>() + exists_row_count,
 	      selection, destination_is_null, destination->arena());
-				std::cout << "copied data: " << copied_data << std::endl;
-		std::cout << "copied data: " << *(destination->mutable_typed_data<type>() + exists_row_count) << std::endl;
 		destination->set_row_count(copied_data + exists_row_count);
-		std::cout << "data address: " << destination->mutable_typed_data<type>() + exists_row_count << std::endl;
   }
-		std::cout << "data address stored: " << destination->content().data_plus_offset(exists_row_count).raw() << std::endl;
   destination->AppendColumnPiece(source.column_piece(0),
 		   destination->content().data_plus_offset(exists_row_count),
 		   exists_row_count,

@@ -149,7 +149,8 @@ struct RowSourceAdapter {
   template<DataType type>
   const typename TypeTraits<type>::cpp_type& typed_notnull_data(
       const size_t column_index) const {
-    return view.column(column_index).typed_data<type>()[offset];
+    //return view.column(column_index).typed_data<type>()[offset];
+	  return view.column(column_index).data_plus_offset_through_column_piece(offset).as<type>()[0];
   }
 
   const View& view;

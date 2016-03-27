@@ -625,6 +625,15 @@ void DefaultColumnHashComputer(const VariantConstPointer data,
   return hash(data.as<type>(), is_null, row_count, hashes);
 }
 
+template<DataType type, bool update, bool is_not_null>
+void DefaultColumnHashComputerDEKE(const Column& column,
+                               bool_const_ptr is_null,
+                               size_t const row_count,
+                               size_t* hashes) {
+  ColumnHashComputerDEKE<type, operators::Hash, update, is_not_null> hash;
+  return hash(column, is_null, row_count, hashes);
+}
+
 struct DefaultColumnHasherResolver {
   DefaultColumnHasherResolver(bool update, bool is_not_null)
       : update(update),
@@ -635,8 +644,8 @@ struct DefaultColumnHasherResolver {
       if (is_not_null) {
         return &DefaultColumnHashComputer<type, true, true>;
       } else {
-        return &DefaultColumnHashComputer<type, true, false>;
       }
+        return &DefaultColumnHashComputer<type, true, false>;
     } else {
       if (is_not_null) {
         return &DefaultColumnHashComputer<type, false, true>;
@@ -649,10 +658,41 @@ struct DefaultColumnHasherResolver {
   bool is_not_null;
 };
 
+struct DefaultColumnHasherResolverDEKE {
+  DefaultColumnHasherResolverDEKE(bool update, bool is_not_null)
+      : update(update),
+        is_not_null(is_not_null) {}
+  template<DataType type>
+  ColumnHasherDEKE operator()() const {
+    if (update) {
+      if (is_not_null) {
+        return &DefaultColumnHashComputerDEKE<type, true, true>;
+      } else {
+      }
+        return &DefaultColumnHashComputerDEKE<type, true, false>;
+    } else {
+      if (is_not_null) {
+        return &DefaultColumnHashComputerDEKE<type, false, true>;
+      } else {
+        return &DefaultColumnHashComputerDEKE<type, false, false>;
+      }
+    }
+  }
+  bool update;
+  bool is_not_null;
+};
+
+
 ColumnHasher GetColumnHasher(DataType type, bool update, bool is_not_null) {
   DefaultColumnHasherResolver resolver(update, is_not_null);
   return TypeSpecialization<ColumnHasher,
                             DefaultColumnHasherResolver>(type, resolver);
+}
+
+ColumnHasherDEKE GetColumnHasherDEKE(DataType type, bool update, bool is_not_null) {
+  DefaultColumnHasherResolverDEKE resolver(update, is_not_null);
+  return TypeSpecialization<ColumnHasherDEKE,
+                            DefaultColumnHasherResolverDEKE>(type, resolver);
 }
 
 EqualityComparator GetEqualsComparator(DataType left_type,

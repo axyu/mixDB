@@ -36,6 +36,7 @@ namespace supersonic {using std::string; }
 #include "supersonic/base/exception/exception_macros.h"
 #include "supersonic/base/exception/result.h"
 #include "supersonic/base/infrastructure/bit_pointers.h"
+#include "supersonic/base/infrastructure/block.h"
 #include "supersonic/base/infrastructure/operators.h"
 #include "supersonic/base/infrastructure/types.h"
 #include "supersonic/base/infrastructure/variant_pointer.h"
@@ -434,6 +435,30 @@ struct ColumnHashComputer {
   }
 };
 
+template<DataType type, typename Hasher, bool update, bool is_not_null>
+struct ColumnHashComputerDEKE {
+  void operator()(const Column& column,
+                  bool_const_ptr is_null,
+                  size_t const row_count,
+                  size_t* hashes) const {
+    Hasher hasher;
+    for (rowcount_t i = 0; i < row_count; ++i) {
+      size_t item_hash;
+      // We're relying on the compiler to take advantage of the constness of
+      // is_null, and pre-compute (is_null != NULL).
+      if (!is_not_null && is_null != NULL && *is_null) {
+        item_hash = 0xdeadbabe;
+      } else {
+        item_hash = hasher(column.data_plus_offset_through_column_piece(i).as<type>()[0]);
+      }
+      // We rely on the compiler to precompute the condition, so there will
+      // be no branching here.
+      if (!is_not_null && is_null != NULL) ++is_null;
+      hashes[i] = update ? hashes[i] * 29 + item_hash : item_hash;
+    }
+  }
+};
+
 // Prototypes of functions that can perform type-specific operations. Arguments
 // to these functions are declared as VariantPointer's, since their type
 // is not known at compile time. Each such function, however, 'knows' the type
@@ -462,6 +487,11 @@ typedef size_t (*Hasher)(VariantConstPointer datum);
 // Prototype of a function that computes or updates hash codes for a column
 // of data.
 typedef void (*ColumnHasher)(VariantConstPointer data,
+                             bool_const_ptr is_null,
+                             size_t row_count,
+                             size_t* hashes);
+
+typedef void (*ColumnHasherDEKE)(const Column& column,
                              bool_const_ptr is_null,
                              size_t row_count,
                              size_t* hashes);
@@ -504,6 +534,8 @@ Hasher GetHasher(DataType type, bool is_not_null);
 // overwritten. If 'is_not_null', the returned function will assume that all
 // the data in the vector is not NULL, and omit some NULL-checks.
 ColumnHasher GetColumnHasher(DataType type, bool update, bool is_not_null);
+
+ColumnHasherDEKE GetColumnHasherDEKE(DataType type, bool update, bool is_not_null);
 
 // Returns a function for computing (left == right).
 EqualityComparator GetEqualsComparator(DataType left_type,
