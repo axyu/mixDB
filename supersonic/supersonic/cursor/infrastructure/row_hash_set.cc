@@ -88,8 +88,10 @@ public:
 				return is_null_a == is_null_b;
 			}
 		}
-		return comparator_((left_column_->typed_data<type>() + row_id_a),
-				(right_column_->typed_data<type>() + row_id_b));
+		//return comparator_((left_column_->typed_data<type>() + row_id_a),
+				//(right_column_->typed_data<type>() + row_id_b));
+		return comparator_((left_column_->data_plus_offset_through_column_piece(row_id_a).as<type>()),
+						(right_column_->typed_data<type>() + row_id_b));
 	}
 
 	void set_left_column(const Column* left_column) {

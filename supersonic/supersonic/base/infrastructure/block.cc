@@ -18,14 +18,15 @@
 namespace supersonic {
 
 bool OwnedColumn::Reallocate(rowcount_t row_capacity,
-                             BufferAllocator* allocator) {
+                             BufferAllocator* allocator,
+							 rowcount_t is_null_capacity /* = -1 */ ) {
   const size_t buffer_size = row_capacity << column_->type_info().log2_size();
   if (!allocator->Reallocate(buffer_size, data_buffer_.get())) {
     return false;
   }
 
   if (is_nullable()) {
-    if (!is_null_array_.Reallocate(row_capacity, allocator)) {
+    if (!is_null_array_.Reallocate((is_null_capacity != -1 ? is_null_capacity : row_capacity), allocator)) {
       // We have reallocated the data buffer; thus need to reset anyway.
       column_->Reset(mutable_data(), mutable_is_null());
       return false;
@@ -73,7 +74,7 @@ bool Block::Reallocate(rowcount_t new_row_capacity, const vector<rowcount_t>& ne
 	CHECK(new_row_capacity_vector.size() == column_count());
 	vector<rowcount_t> reallocated_capacity(column_count(), new_row_capacity);
 	for (int i = 0; i < column_count(); i++) {
-		if (!columns_[i].Reallocate(new_row_capacity_vector[i], allocator_)) {
+		if (!columns_[i].Reallocate(new_row_capacity_vector[i], allocator_,new_row_capacity)) {
 			if (new_row_capacity < row_capacity()) {
 				set_in_memory_row_capacity_vector(reallocated_capacity);
 	      set_row_capacity(new_row_capacity);

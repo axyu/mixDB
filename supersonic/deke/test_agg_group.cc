@@ -31,21 +31,24 @@ int main()
 
 	Table fact(fact_schema,HeapBufferAllocator::Get());
 	vector<rowcount_t> in_memory_row_capacity_vector;
-	in_memory_row_capacity_vector.push_back(size);
-	in_memory_row_capacity_vector.push_back(size);
-	in_memory_row_capacity_vector.push_back(size);
+	in_memory_row_capacity_vector.push_back(0);
+	in_memory_row_capacity_vector.push_back(0);
+	in_memory_row_capacity_vector.push_back(0);
 	fact.ReserveRowCapacityOneTime(size, in_memory_row_capacity_vector);
 	cout<<">>>>start<<<<"<<endl;
 	File *fp = File::OpenOrDie("./fact_table_data","r");
 	FailureOrOwned<Cursor> cu(FileInput(fact_schema, fp, false,
 			HeapBufferAllocator::Get()));
+	vector<StorageType>  fact_storage({DISK,DISK,DISK});
+	vector<StorageType>  dim1_storage({MEMORY});
+	vector<StorageType>  dim2_storage({MEMORY});
 	while(1)
 	{
 		ResultView result(cu->Next(rowGroupSize));
 		if(result.has_data())
 		{
 			const View& view = result.view();
-			fact.AppendView(view);
+			fact.AppendView(view,fact_storage);
 		}else {
 			break;
 		}
@@ -57,9 +60,9 @@ int main()
 	Table dim2(dimension2_schema,HeapBufferAllocator::Get());
 	//vector<rowcount_t> in_memory_row_capacity_vector;
 	in_memory_row_capacity_vector.clear();
-	in_memory_row_capacity_vector.push_back(size);
-	dim1.ReserveRowCapacityOneTime(size, in_memory_row_capacity_vector);
-	dim2.ReserveRowCapacityOneTime(size, in_memory_row_capacity_vector);
+	in_memory_row_capacity_vector.push_back(rowGroupSize);
+	dim1.ReserveRowCapacityOneTime(rowGroupSize, in_memory_row_capacity_vector);
+	dim2.ReserveRowCapacityOneTime(rowGroupSize, in_memory_row_capacity_vector);
 	cout<<">>>>start<<<<"<<endl;
 	File *fp1 = File::OpenOrDie("./dimension1_table_data","r");
 	FailureOrOwned<Cursor> cu1(FileInput(dimension1_schema, fp1, false,
@@ -70,7 +73,7 @@ int main()
 		if(result.has_data())
 		{
 			const View& view = result.view();
-			dim1.AppendView(view);
+			dim1.AppendView(view,dim1_storage);
 		}else {
 			break;
 		}
@@ -88,7 +91,7 @@ int main()
 		if(result.has_data())
 		{
 			const View& view = result.view();
-			dim2.AppendView(view);
+			dim2.AppendView(view,dim2_storage);
 		}else {
 			break;
 		}
@@ -97,10 +100,14 @@ int main()
 	//fp2->Close();
 	cout<<">>>>>end input dimesion2_table_data<<<<<"<<endl;
 
-	dim1.SetNull(0, 3*1024 +10);
-	dim1.SetNull(0, 7*1024 + 10);
-	dim2.SetNull(0, 3*1024 + 10);
-	dim2.SetNull(0, 7*1024 + 10);
+	for(int i=0;i<1024;i+=10) {
+		dim1.SetNull(0,i);
+		dim2.SetNull(0,i+1);
+	}
+	//dim1.SetNull(0, 10);
+	//dim1.SetNull(0, 20);
+	//dim2.SetNull(0, 3*1024 + 10);
+	//dim2.SetNull(0, 7*1024 + 10);
 
 	AggregationSpecification *ag_spe = new AggregationSpecification();
 	ag_spe->AddAggregation(SUM,"agg","sum_agg");

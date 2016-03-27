@@ -328,7 +328,7 @@ class OwnedColumn {
 	}
 
   // Called from the Block's reallocate.
-  bool Reallocate(rowcount_t row_capacity, BufferAllocator* allocator);
+  bool Reallocate(rowcount_t row_capacity, BufferAllocator* allocator, rowcount_t is_null_capacity = -1);
 
   // Returns the read-only view on the data.
   const Column& content() const { return *column_; }

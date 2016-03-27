@@ -24,7 +24,7 @@ enum StorageType {
 };
 
 class FileBuffer {
-// File buffer of for each column piece to buffer the data in disk.
+	// File buffer of for each column piece to buffer the data in disk.
 public:
 	const std::string file_name() const {
 		return file_name_;
@@ -90,8 +90,8 @@ private:
 	friend class ColumnPiece;
 
 	FileBuffer(const void *data, size_t length)
-			: file_name_(AllocateFileName()), 
-				allocator_(HeapBufferAllocator::Get()) {
+	: file_name_(AllocateFileName()),
+	  allocator_(HeapBufferAllocator::Get()) {
 		File* file = File::OpenOrDie(file_name_, "w+");
 		begin_in_file_  = file->FileSize();
 		file->Seek(begin_in_file_);
@@ -102,9 +102,9 @@ private:
 	}
 
 	FileBuffer(const FileBuffer& file_buffer)
-			:	file_name_(file_buffer.file_name()), 
-				begin_in_file_(file_buffer.begin_in_file()),
-				allocator_(HeapBufferAllocator::Get()) {
+	:	file_name_(file_buffer.file_name()),
+		begin_in_file_(file_buffer.begin_in_file()),
+		allocator_(HeapBufferAllocator::Get()) {
 		Init();
 	}
 	// Generate the name for data file in disk.
@@ -142,48 +142,46 @@ private:
 class ColumnPiece {
 public:
 	ColumnPiece(VariantConstPointer data_in_memory,
-		const rowcount_t offset,
-		const rowcount_t size,
-		const TypeInfo& type_info)
-			: data_in_memory_(data_in_memory),
-				in_memory_offset_(offset),
-				offset_(offset),
-				size_(size),
-				type_info_(&type_info),
-		  	storage_type_(MEMORY),
-				file_buffer_(nullptr) {}
+			const rowcount_t offset,
+			const rowcount_t size,
+			const TypeInfo& type_info)
+: data_in_memory_(data_in_memory),
+  in_memory_offset_(offset),
+  offset_(offset),
+  size_(size),
+  type_info_(&type_info),
+  storage_type_(MEMORY),
+  file_buffer_(nullptr) {}
 
 	// Construct ColumnPiece from another ColumnPiece.
 	ColumnPiece(const ColumnPiece& source_column_piece,
-		VariantConstPointer data_in_memory,
-		const rowcount_t in_memory_offset,
-		const rowcount_t offset,
-		const StorageType storage_type,
-		const TypeInfo& type_info)
-			: data_in_memory_(data_in_memory),
-	  		in_memory_offset_(in_memory_offset),
-	  		offset_(offset),
-	  		type_info_(&type_info),
-	  		size_(source_column_piece.size()),
-	  		storage_type_(storage_type),
-	  		file_buffer_(nullptr) {
+			VariantConstPointer data_in_memory,
+			const rowcount_t in_memory_offset,
+			const rowcount_t offset,
+			const StorageType storage_type,
+			const TypeInfo& type_info)
+	: data_in_memory_(data_in_memory),
+	  in_memory_offset_(in_memory_offset),
+	  offset_(offset),
+	  type_info_(&type_info),
+	  size_(source_column_piece.size()),
+	  storage_type_(storage_type),
+	  file_buffer_(nullptr) {
 		if(source_column_piece.storage_type() == MEMORY) {
 			if(storage_type == MEMORY) {
-			// MEMORY to MEMORY: Do nothing.
+				// MEMORY to MEMORY: Do nothing.
 			}
 			else {
-			// MEMORY to DISK: Create the file buffer.
-				std::cout <<"source piece type size: "<< source_column_piece.type_info().size() << std::endl;
-				std::cout <<"piece type size: " <<type_info_->size()<<std::endl;
+				// MEMORY to DISK: Create the file buffer.
 				file_buffer_.reset(new FileBuffer(source_column_piece.data().raw(), source_column_piece.size() * type_info_->size()));
 			}
 		}else {
 			if(storage_type == MEMORY) {
-			// DISK to MEMORY: This situation should not appear.
+				// DISK to MEMORY: This situation should not appear.
 				std::cerr<<"in ColumnPiece disk -> memory "<<std::endl;
 				exit(-1);
 			}else {
-			// DISK to DISK: Share the same data file in disk.
+				// DISK to DISK: Share the same data file in disk.
 				file_buffer_.reset(new FileBuffer(source_column_piece.file_buffer()));
 			}
 		}
@@ -222,11 +220,11 @@ public:
 	}
 
 	rowcount_t size() const {
-			return size_;
+		return size_;
 	}
 
 	StorageType storage_type() const {
-			return storage_type_;
+		return storage_type_;
 	}
 
 	const TypeInfo& type_info() const {
@@ -249,7 +247,7 @@ public:
 	}
 
 private:
-	 const FileBuffer& file_buffer() const {
+	const FileBuffer& file_buffer() const {
 		return *file_buffer_;
 	}
 	// Pointer to the data stored in memory.

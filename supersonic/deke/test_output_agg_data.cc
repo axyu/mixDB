@@ -18,14 +18,14 @@ int main()
 	const unsigned size = rowGroupSize*10 + 200;
 	int64 *fact_group_by=(int64 *)malloc(size*sizeof(int64));
 	int64 *fact_aggregate= (int64 *)malloc(size * sizeof(int64));
-	double *dimension_1=(double *)malloc(size*sizeof(double));
-	double *dimension_2=(double *)malloc(size*sizeof(double));
+	double *dimension_1=(double *)malloc(1024*sizeof(double));
+	double *dimension_2=(double *)malloc(1024*sizeof(double));
 	for(int i=0;i<size;i++)
 	{
-		fact_group_by[i]=i;
-		fact_aggregate[i]=i*10;
-		dimension_1[i]=i*0.1;
-		dimension_2[i]=i*0.01;
+		fact_group_by[i]=i % 1024;
+		fact_aggregate[i]=(i %1024)*10;
+		dimension_1[i%1024]=(i%1024)*0.1;
+		dimension_2[i%1024]=(i%1024)*0.01;
 	}
 
 	TupleSchema fact_schema;
@@ -41,17 +41,19 @@ int main()
 
 	View fact_table(fact_schema),dimension1(dimension1_schema),dimension2(dimension2_schema);
 
-	bool* is_null = new bool[size];
-	memset(is_null,false,size);
+	bool* fact_is_null = new bool[size];
+	memset(fact_is_null,false,size);
+	bool* dimension_is_null = new bool[size];
+	memset(dimension_is_null,false,size);
 	fact_table.set_row_count(size);
-	fact_table.mutable_column(0)->Reset(fact_group_by,is_null,size);
-	fact_table.mutable_column(1)->Reset(fact_group_by,is_null,size);
-	fact_table.mutable_column(2)->Reset(fact_aggregate,is_null,size);
+	fact_table.mutable_column(0)->Reset(fact_group_by,fact_is_null,size);
+	fact_table.mutable_column(1)->Reset(fact_group_by,fact_is_null,size);
+	fact_table.mutable_column(2)->Reset(fact_aggregate,fact_is_null,size);
 
-	dimension1.set_row_count(size);
-	dimension2.set_row_count(size);
-	dimension1.mutable_column(0)->Reset(dimension_1, is_null,size);
-	dimension2.mutable_column(0)->Reset(dimension_2, is_null,size);
+	dimension1.set_row_count(rowGroupSize);
+	dimension2.set_row_count(rowGroupSize);
+	dimension1.mutable_column(0)->Reset(dimension_1, dimension_is_null,rowGroupSize);
+	dimension2.mutable_column(0)->Reset(dimension_2, dimension_is_null,rowGroupSize);
 
 	cout<<">>>>start<<<<"<<endl;
 	File* fp=File::OpenOrDie("./fact_table_data","w");

@@ -131,7 +131,8 @@ class ColumnAggregatorImpl : public ColumnAggregatorInternal {
     for (vector<rowid_t>::const_iterator it = selected_inputs_indexes.begin();
          it != selected_inputs_indexes.end(); ++it) {
       if (!UpdateAggregatedValue(
-              input->data().as<InputType>()[*it],
+              //input->data().as<InputType>()[*it],
+    		  input->data_plus_offset_through_column_piece(*it).as<InputType>()[0],
               result_index_map[*it])) {
         THROW(new Exception(
             ERROR_MEMORY_EXCEEDED,
