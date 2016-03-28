@@ -38,7 +38,8 @@ using std::allocator;
 
 
 namespace supersonic {
-
+static const int kInitialArenaBufferSize = 16;
+static const int kMaxArenaBufferSize = 16 * 1024 * 1024;
 // A helper class for storing variable-length blobs (e.g. strings). Once a blob
 // is added to the arena, its index stays fixed. No reallocation happens.
 // Instead, the arena keeps a list of buffers. When it needs to grow, it

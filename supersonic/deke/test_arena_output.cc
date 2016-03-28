@@ -6,7 +6,7 @@
 #include "supersonic/cursor/infrastructure/file_io.h"
 #include "supersonic/utils/basictypes.h"
 
-
+#include <sstream>
 using namespace std;
 
 using namespace supersonic;
@@ -14,7 +14,7 @@ using namespace supersonic;
 int main()
 {
 
-	const unsigned size = 1024*1024;
+	const unsigned size = 1024* 10 + 200;
 	int *a=(int *)malloc(size*sizeof(int));
 	double *b=(double *)malloc(size*sizeof(double));
 	StringPiece *str=(StringPiece *)malloc(size*sizeof(StringPiece));
@@ -24,7 +24,10 @@ int main()
 	{
 		a[i]=i;
 		b[i]=i*0.1;
-		str[i]=StringPiece(arena.AddStringPieceContent(tt),tt.length());
+		stringstream ss;
+		ss << tt << i;
+		string tmp = ss.str();
+		str[i]=StringPiece(arena.AddStringPieceContent(tmp),tmp.length());
 	}
 
 	TupleSchema schema;

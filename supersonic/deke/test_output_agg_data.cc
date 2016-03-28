@@ -34,10 +34,10 @@ int main()
 	fact_schema.add_attribute(Attribute("agg",INT64,NULLABLE));
 
 	TupleSchema dimension1_schema;
-	dimension1_schema.add_attribute(Attribute("dimension_1",DOUBLE,NULLABLE));
+	dimension1_schema.add_attribute(Attribute("dimension_1",STRING,NULLABLE));
 
 	TupleSchema dimension2_schema;
-	dimension2_schema.add_attribute(Attribute("dimension_2",DOUBLE,NULLABLE));
+	dimension2_schema.add_attribute(Attribute("dimension_2",STRING,NULLABLE));
 
 	View fact_table(fact_schema),dimension1(dimension1_schema),dimension2(dimension2_schema);
 

@@ -8,6 +8,7 @@
 using std::unique_ptr;
 
 #include "supersonic/base/infrastructure/variant_pointer.h"
+#include "supersonic/base/memory/arena.h"
 #include "supersonic/base/memory/memory.h"
 #include "supersonic/utils/file.h"
 #include "supersonic/utils/macros.h"
@@ -34,13 +35,16 @@ public:
 		return begin_in_file_;
 	}
 
-	const size_t offset_buffered() const {
+	const rowcount_t offset_buffered() const {
 		return offset_buffered_;
 	}
-	const size_t size_buffered() const {
+	const rowcount_t size_buffered() const {
 		return size_buffered_;
 	}
 
+	const TypeInfo& type_info() const {
+		return type_info_;
+	}
 	// Return the data pointer in the buffer.
 	VariantConstPointer data() const {
 		if(buffer_.get() == NULL) {
@@ -51,8 +55,8 @@ public:
 	}
 
 	// Reallocate requested memory for the buffer.
-	bool reallocate(size_t requested) {
-		if(!allocator_->Reallocate(requested, buffer_.get())) {
+	bool reallocate(rowcount_t requested) {
+		if(!allocator_->Reallocate(requested * type_info_.size(), buffer_.get())) {
 			return false;
 		}
 		offset_buffered_ = 0;
@@ -63,25 +67,64 @@ public:
 	// Prepare requested data
 	// if the data has been buffered do nothing
 	// else read data from the file to buffer.
-	size_t PrepareData(size_t offset_in_piece, size_t requested) {
-		size_t end = requested + offset_in_piece;
+	// offset_in_piece and requested are row_id in the column.
+	rowcount_t PrepareData(rowcount_t offset_in_piece, rowcount_t requested) {
+		rowcount_t end = requested + offset_in_piece;
 		if(offset_in_piece >= offset_buffered_ && end < size_buffered_ + offset_buffered_) {
 			return size_buffered_ - (offset_in_piece - offset_buffered_);
 		}
 		File* file = File::OpenOrDie(file_name_, "r");
-		size_t offset_in_file = begin_in_file_ + offset_in_piece;
-		file->Seek(offset_in_file);
-		if(reallocate(requested)){
-			size_buffered_ = file->Read(buffer_->data(), requested);
-			offset_buffered_ = offset_in_piece;
-			file->Close();
-			return size_buffered_;
+		if(!type_info_.is_variable_length()) {
+			size_t offset_in_file = begin_in_file_ + offset_in_piece * type_info_.size();
+			file->Seek(offset_in_file);
+			if(reallocate(requested)){
+				size_buffered_ = file->Read(buffer_->data(), requested * type_info_.size()) / type_info_.size();
+				offset_buffered_ = offset_in_piece;
+				file->Close();
+				return size_buffered_;
+			}else {
+				std::cerr<<"reallocate fail in PrepareData"<<std::endl;
+				offset_buffered_ = 0;
+				size_buffered_ = 0;
+				file->Close();
+				return 0;
+			}
 		}else {
-			std::cerr<<"reallocate fail in PrepareData"<<std::endl;
-			offset_buffered_ = 0;
-			size_buffered_ = 0;
-			file->Close();
-			return 0;
+			size_t first_offset = 0;
+			size_t data_length = 0;
+			size_t* data_index = new size_t[2 * requested];
+			file->Seek(begin_in_file_ + offset_in_piece * 2 * sizeof(size_t));
+			file->Read(data_index, 2 * requested * sizeof(size_t));
+			first_offset = begin_in_file_ + data_index[0];
+			for(rowcount_t i = 0; i < requested; i++) {
+				data_length += data_index[2 * i + 1];
+			}
+			char* strings_data = NULL;
+			strings_data = static_cast<char*>(arena_->AllocateBytes(data_length));
+			if(!strings_data) {
+				std::cerr << "Arena allocation for filebuffer failed."<< std::endl;
+			}
+			file->Seek(first_offset);
+			size_t read_length = file->Read(strings_data, data_length);
+			CHECK_EQ(read_length, data_length);
+			if(reallocate(requested)){
+				StringPiece* string_pieces = static_cast<StringPiece*>(buffer_->data());
+				size_t offset = 0;
+				for(rowcount_t row = 0; row < requested; row++) {
+					string_pieces[row] = StringPiece(strings_data + offset, data_index[2 * row + 1]);
+					offset += data_index[2 * row + 1];
+				}
+				size_buffered_ = requested;
+				offset_buffered_ = offset_in_piece;
+				file->Close();
+				return size_buffered_;
+			}else {
+				std::cerr<<"reallocate fail in PrepareData (variable length)"<<std::endl;
+				offset_buffered_ = 0;
+				size_buffered_ = 0;
+				file->Close();
+				return 0;
+			}
 		}
 	}
 
@@ -89,14 +132,34 @@ private:
 	// Only the ColumnPiece to create FileBuffer.
 	friend class ColumnPiece;
 
-	FileBuffer(const void *data, size_t length)
+	FileBuffer(VariantConstPointer data, rowcount_t length, const TypeInfo& type_info)
 	: file_name_(AllocateFileName()),
-	  allocator_(HeapBufferAllocator::Get()) {
+	  allocator_(HeapBufferAllocator::Get()),
+	  type_info_(type_info),
+	  arena_(nullptr) {
 		File* file = File::OpenOrDie(file_name_, "w+");
 		begin_in_file_  = file->FileSize();
 		file->Seek(begin_in_file_);
-		size_t write_size = file->Write(data, length);
-		CHECK_EQ(write_size, length) << "in File Buffer write_size != length";
+		if(!type_info.is_variable_length()) {
+			size_t write_size = file->Write(data.raw(), length * type_info.size());
+			CHECK_EQ(write_size, length * type_info.size()) << "in File Buffer write_size != length";
+		} else {
+			const StringPiece* string_piece_ptr = data.as_variable_length();
+			size_t* data_index = new size_t[2 * length];
+			size_t total_length = 0;
+			for(rowcount_t i = 0; i < length; i++) {
+				data_index[2 * i ] = total_length + 2 * length * sizeof(size_t);
+				data_index[2 * i + 1] = string_piece_ptr[i].length();
+				total_length += data_index[2 * i + 1];
+			}
+			size_t write_size = file->Write(data_index, 2 * length * sizeof(size_t));
+			CHECK_EQ(write_size, 2 * length * sizeof(size_t)) << "in File Buffer write_size != 2 * length * sizeof(size_t)";
+			for(rowcount_t i = 0; i < length; i++) {
+				write_size = file->Write(string_piece_ptr[i].data(), string_piece_ptr[i].length());
+				CHECK_EQ(write_size, string_piece_ptr[i].length()) << "in File Buffer write_size != string_piece_ptr[i].length()";
+			}
+			delete data_index;
+		}
 		file->Close();
 		Init();
 	}
@@ -104,7 +167,9 @@ private:
 	FileBuffer(const FileBuffer& file_buffer)
 	:	file_name_(file_buffer.file_name()),
 		begin_in_file_(file_buffer.begin_in_file()),
-		allocator_(HeapBufferAllocator::Get()) {
+		allocator_(HeapBufferAllocator::Get()),
+		type_info_(file_buffer.type_info()),
+		arena_(nullptr) {
 		Init();
 	}
 	// Generate the name for data file in disk.
@@ -121,6 +186,8 @@ private:
 	// Init the buffer_.
 	void Init() {
 		buffer_.reset(allocator_->Allocate(0));
+		if(type_info_.is_variable_length())
+			arena_.reset(new Arena(allocator_, 0, kMaxArenaBufferSize));
 		offset_buffered_ = 0;
 		size_buffered_ = 0;
 	}
@@ -129,14 +196,18 @@ private:
 	const std::string file_name_;
 	// Begin offset of the data in the file.
 	size_t begin_in_file_;
-	// Offset of the data which has been buffered into memory.
-	size_t offset_buffered_;
-	// Size of the data which has been buffered into memory.
-	size_t size_buffered_;
+	// Offset of the data which has been buffered into memory(row_id).
+	rowcount_t offset_buffered_;
+	// Size of the data which has been buffered into memory(row_id).
+	rowcount_t size_buffered_;
 	// Allocator for the buffer.
 	BufferAllocator* const allocator_;
 	// Buffer for the data in disk.
 	scoped_ptr<Buffer> buffer_;
+	// Type info of the data.
+	const TypeInfo& type_info_;
+	// Holds variable length data
+	scoped_ptr<Arena> arena_;
 };
 
 class ColumnPiece {
@@ -173,7 +244,7 @@ public:
 			}
 			else {
 				// MEMORY to DISK: Create the file buffer.
-				file_buffer_.reset(new FileBuffer(source_column_piece.data().raw(), source_column_piece.size() * type_info_->size()));
+				file_buffer_.reset(new FileBuffer(source_column_piece.data(), source_column_piece.size(), type_info));
 			}
 		}else {
 			if(storage_type == MEMORY) {
@@ -202,7 +273,7 @@ public:
 		if(storage_type_ == MEMORY) {
 			return data_in_memory_.offset(offset_in_piece, *type_info_);
 		}else {
-			if(file_buffer_->PrepareData(offset_in_piece * type_info_->size(), type_info_->size()) == type_info_->size()) {
+			if(file_buffer_->PrepareData(offset_in_piece, 1) == 1) {
 				//return file_buffer_->data().offset(offset_in_piece, *type_info_);
 				return file_buffer_->data();
 			}else {
@@ -242,7 +313,7 @@ public:
 		if(storage_type_ == MEMORY) {
 			return size_;
 		}else {
-			return file_buffer_->PrepareData(0, size_ * type_info_->size()) / type_info_->size();
+			return file_buffer_->PrepareData(0, size_);
 		}
 	}
 
@@ -254,7 +325,7 @@ private:
 	VariantConstPointer data_in_memory_;
 	// Offset in memory of the piece.
 	rowcount_t in_memory_offset_;
-	// Offset of the piece.
+	// Offset of the column.
 	rowcount_t offset_;
 	// type_info of the column.
 	const TypeInfo* type_info_;

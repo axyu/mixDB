@@ -18,9 +18,6 @@
 
 namespace supersonic {
 
-static const int kInitialArenaBufferSize = 16;
-static const int kMaxArenaBufferSize = 16 * 1024 * 1024;
-
 EnumDefinition::Rep::Rep(BufferAllocator* buffer_allocator)
     : buffer_allocator_(buffer_allocator),
       arena_(buffer_allocator, kInitialArenaBufferSize,

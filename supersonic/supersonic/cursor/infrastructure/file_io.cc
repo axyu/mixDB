@@ -432,6 +432,7 @@ FailureOrVoid FileInputCursor::ReadColumn(OwnedColumn* column,
   const TypeInfo& type_info = column->content().type_info();
   if (type_info.is_variable_length()) {
     PROPAGATE_ON_FAILURE(ReadVariableLengthData(column, row_count));
+    column->RebuildColumnPieceVector(row_count);
   } else {
     PROPAGATE_ON_FAILURE(ExpectData(
         Read(input_file_, row_count << type_info.log2_size(),

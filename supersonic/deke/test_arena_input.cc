@@ -20,39 +20,57 @@ int main()
 	cout<<">>>>start<<<<"<<endl;
 	File *fp = File::OpenOrDie("./ab","r");
 	FailureOrOwned<Cursor> cu(FileInput(schema, fp, false,
-	                                      HeapBufferAllocator::Get()));
+			HeapBufferAllocator::Get()));
 	int64 i=0;
+	rowcount_t total_row_capacity = 1024*10 + 200;
+	vector<rowcount_t> in_memory_row_capacity_vector;
+	in_memory_row_capacity_vector.push_back(0);
+	in_memory_row_capacity_vector.push_back(0);
+	in_memory_row_capacity_vector.push_back(0);
 	Table table(schema,HeapBufferAllocator::Get());
+	table.ReserveRowCapacityOneTime(total_row_capacity,in_memory_row_capacity_vector);
+
+	vector<StorageType> spt({DISK, DISK, DISK});
 
 	while(1)
 	{
-		ResultView result(cu->Next(1000));
+		ResultView result(cu->Next(1024));
 		if(result.has_data())
 		{
-			table.AppendView(result.view());
-			cout<<i<<" "<<result.view().row_count()<<endl;
+			table.AppendView(result.view(),spt);
+			//cout<<i<<" "<<result.view().row_count()<<endl;
 			i+=result.view().row_count();
 		}else
 		{
 			break;
 		}
 	}
-	cout<<i<<endl;
 	cout<<"table row_count = "<<table.view().row_count()<<endl;
-	/*
-	cu->Next(8190);
-	ResultView result(cu->Next(1024));
-	View resultView(result.view());
-	cout<<">>>>end<<<<"<<endl;
-	const int32* key = resultView.column(0).typed_data<INT32>();
-	const double* val = resultView.column(1).typed_data<DOUBLE>();
-
-	for(int i=0;i<6;i++)
-	{
-		cout<<key[i]<<" "<<val[i]<<endl;
+	const View& view = table.view();
+	const vector<shared_ptr<ColumnPiece>>& cpstr = view.column(0).column_piece_vector();
+	const vector<shared_ptr<ColumnPiece>>& cpa = view.column(1).column_piece_vector();
+	const vector<shared_ptr<ColumnPiece>>& cpb = view.column(2).column_piece_vector();
+	//const vector<shared_ptr<ColumnPiece>>& cpb = view.column(1).column_piece_vector();
+	cout<<cpa.size()<<">>>>>>>>>>>>>"<<cpb.size()<<"  ||"<<endl;
+	for(int i=0; i<cpa.size(); i++){
+		PrintColumnPiece<STRING>(*cpstr[i]);
+		PrintColumnPiece<INT32>(*cpa[i]);
+		PrintColumnPiece<DOUBLE>(*cpb[i]);
 	}
-	cout<<resultView.schema().GetHumanReadableSpecification()<<endl;
-	cout<<resultView.row_count()<<endl;
-	*/
+	//view.PrintViewColumnPieceInfo();
+
+	/*
+		cout<<"table input piece info "<<cpa[i]->offset()<<" "<<cpa[i]->size()<<" | "<<cpb[i]->offset()<<" "<<cpb[i]->size()<<endl;
+		int end = 1024;
+		if(i == cpa.size() - 1) end = 200;
+		for(int j = 0; j < end; j++) {
+		cout<<"table input piece data "
+			<<view.column(0).data_plus_offset(i*1024+j).as<DOUBLE>()[0]<<" "
+			<<view.column(1).data_plus_offset(i*1024+j).as<INT32>()[0]<<endl;
+		cout<<"j: "<<j<<endl;
+		}
+		}*/
+	cout<<">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"<<endl;
+	cout<<view.row_count()<<endl;
 	return 0;
 }
