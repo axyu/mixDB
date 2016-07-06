@@ -48,6 +48,10 @@ class Aggregator {
       BufferAllocator* allocator,
       rowcount_t result_initial_row_capacity);
 
+  const AggregationSpecification& aggregation_specification() const { return *aggregation_specification_; }
+
+  rowcount_t result_initial_row_capacity() const { return result_initial_row_capacity_; }
+
   const TupleSchema& schema() const { return schema_; }
 
   const View& data() const { return data_->view(); }
@@ -82,6 +86,8 @@ class Aggregator {
                      BufferAllocator* allocator,
                      rowcount_t result_initial_row_capacity);
 
+  const AggregationSpecification* aggregation_specification_;
+  rowcount_t result_initial_row_capacity_;
   TupleSchema schema_;
   std::unique_ptr<Block> data_;
 

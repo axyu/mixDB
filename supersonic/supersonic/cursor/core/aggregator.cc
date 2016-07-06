@@ -186,6 +186,8 @@ FailureOrVoid Aggregator::Init(
         make_pair(input_position_vector[i],
                   make_linked_ptr(create_aggregator_result.release())));
   }
+  aggregation_specification_ = &aggregation_specification;
+  result_initial_row_capacity_ = result_initial_row_capacity;
   return Success();
 }
 

@@ -1,0 +1,39 @@
+./cursor/core/aggregate.h:    Element(const Aggregation aggregation,
+./cursor/core/aggregate.h:    Element(const Aggregation aggregation,
+./cursor/core/aggregate.h:    void set_aggregation_operator(Aggregation aggregation) {
+./cursor/core/aggregate.h:    Aggregation aggregation_;
+./cursor/core/aggregate.h:  AggregationSpecification* AddAggregation(Aggregation aggregation,
+./cursor/core/aggregate.h:      Aggregation aggregation,
+./cursor/core/aggregate.h:      Aggregation aggregation,
+./cursor/core/aggregate.h:      Aggregation aggregation,
+./cursor/core/aggregate.h:// input) returns exactly 1 row, then use ScalarAggregation instead.
+./cursor/core/aggregate_groups_test.cc:// Aggregation on empty input with empty key should return empty result.
+./cursor/core/aggregate_groups_test.cc:// Aggregation on empty input with group by columns should return empty result.
+./cursor/core/aggregator.cc:            StringPrintf("Incorrect aggregation specification. Aggregation "
+./cursor/core/aggregator.cc:          StringPrintf("Incorrect aggregation specification. Aggregation "
+./cursor/core/column_aggregator.cc:template<Aggregation Aggregation, DataType InputType, DataType OutputType>
+./cursor/core/column_aggregator.cc:      Aggregation aggregation_operator,
+./cursor/core/column_aggregator.cc:      Aggregation aggregation_operator,
+./cursor/core/column_aggregator.cc:  bool IsAggregationSupported(Aggregation aggregation_operator, DataType t1,
+./cursor/core/column_aggregator.cc:template<Aggregation aggregation, DataType input_type, DataType output_type>
+./cursor/core/column_aggregator.cc:    Aggregation aggregation_operator,
+./cursor/core/column_aggregator.cc:        StringPrintf("Aggregation not supported. Aggregation function %s not "
+./cursor/core/column_aggregator.cc:    Aggregation aggregation_operator,
+./cursor/core/column_aggregator.cc:        StringPrintf("Aggregation not supported. Count can not store result "
+./cursor/core/column_aggregator.cc:    Aggregation aggregation_operator, DataType t1, DataType t2) {
+./cursor/core/column_aggregator.cc:    Aggregation aggregation_operator,
+./cursor/core/column_aggregator.cc:    Aggregation aggregation_operator,
+./cursor/core/column_aggregator.h:  // make sure that UpdateAggregation calls do not try to write at index larger
+./cursor/core/column_aggregator.h:      Aggregation aggregation_operator,
+./cursor/core/column_aggregator.h:      Aggregation aggregation_operator,
+./cursor/core/hybrid_aggregate_test.cc:// Aggregation on empty input with empty key should return empty result.
+./cursor/core/hybrid_aggregate_test.cc:// Aggregation on empty input with group by columns should return empty result.
+Binary file ./cursor/core/aggregator.o matches
+Binary file ./cursor/core/column_aggregator.o matches
+./expression/core/stateful_bound_expressions.cc:template<Aggregation aggregation_type, DataType input_type>
+./expression/core/stateful_bound_expressions.cc:template<Aggregation aggregation_type>
+./proto/supersonic.proto:enum Aggregation {
+./proto/supersonic.pb.h:enum Aggregation {
+./proto/supersonic.pb.h:const Aggregation Aggregation_MIN = SUM;
+./proto/supersonic.pb.h:const Aggregation Aggregation_MAX = LAST;
+./proto/supersonic.pb.h:inline const ::std::string& Aggregation_Name(Aggregation value) {

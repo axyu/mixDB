@@ -35,6 +35,7 @@ using std::vector;
 #include "supersonic/base/exception/exception.h"
 #include "supersonic/base/infrastructure/bit_pointers.h"
 #include "supersonic/base/infrastructure/block.h"
+#include "supersonic/base/infrastructure/optimizer.h"
 #include "supersonic/base/infrastructure/projector.h"
 #include "supersonic/base/infrastructure/tuple_schema.h"
 #include "supersonic/base/infrastructure/types.h"
@@ -42,6 +43,7 @@ using std::vector;
 #include "supersonic/cursor/base/cursor.h"
 #include "supersonic/cursor/infrastructure/iterators.h"
 #include "supersonic/cursor/infrastructure/table.h"
+#include "supersonic/cursor/infrastructure/view_printer.h"
 #include "supersonic/proto/supersonic.pb.h"
 
 namespace supersonic {
@@ -88,10 +90,10 @@ public:
 				return is_null_a == is_null_b;
 			}
 		}
-		//return comparator_((left_column_->typed_data<type>() + row_id_a),
-				//(right_column_->typed_data<type>() + row_id_b));
-		return comparator_((left_column_->data_plus_offset_through_column_piece(row_id_a).as<type>()),
-						(right_column_->typed_data<type>() + row_id_b));
+		return comparator_((left_column_->typed_data<type>() + row_id_a),
+				(right_column_->typed_data<type>() + row_id_b));
+		//return comparator_((left_column_->data_plus_offset_through_column_piece(row_id_a).as<type>()),
+		//				(right_column_->typed_data<type>() + row_id_b));
 	}
 
 	void set_left_column(const Column* left_column) {
@@ -325,7 +327,7 @@ private:
 
 	// Placeholder for hash values calculated in one go over entire query to
 	// find/insert.
-	mutable size_t query_hash_[Cursor::kDefaultRowCount];
+	mutable size_t query_hash_[/*Cursor::kDefaultRowCount*/Optimizer::kRowGroupSize];
 
 	// Bit mask used for calculating last_row_id_ index.
 	int hash_mask_;
@@ -471,12 +473,24 @@ size_t RowHashSetImpl::InsertUnique(
 	CHECK_GE(arraysize(query_hash_), query.row_count());
 
 	key_selector_->Project(query, &query_key_);
-	bool_array* is_null = new bool_array();
-	is_null->Reallocate(query.row_count(), allocator_);
-	for(int i = 0; i < query.row_count(); i++) {
-		*(is_null->mutable_data() + i) = !selection_vector[i];
-	}
-	HashQuery(query_key_, query.row_count(), query_hash_, is_null->const_data());
+	//bool_array* is_null = new bool_array();
+	//is_null->Reallocate(query.row_count(), allocator_);
+	//if(!selection_vector) {
+		//for(int i = 0; i < query.row_count(); i++) {
+			//*(is_null->mutable_data() + i) = false;
+		//}
+	//} else {
+	//	for(int i = 0; i < query.row_count(); i++) {
+	//		*(is_null->mutable_data() + i) = !selection_vector[i];
+	//	}
+	//}
+	/*ViewPrinter view_printer;
+	std::cout << "query row count: " << query.row_count() << std::endl;
+	view_printer.AppendViewToStream(query, &std::cout);
+	std::cout << "query key row count: " << query_key_.row_count() << std::endl;
+	view_printer.AppendViewToStream(query_key_, &std::cout);
+*/
+	HashQuery(query_key_, query.row_count(), query_hash_);//, is_null->const_data());
 	comparator_.set_left_view(&query_key_);
 
 	ViewRowIterator iterator(query);

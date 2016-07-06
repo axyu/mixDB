@@ -155,7 +155,11 @@ class Table : public BasicOperation {
     Clear();
     return swapped.release();
   }
-
+  void RebuildColumnPieceVector() {
+  	for(int i = 0; i < view_.column_count(); i++) {
+		view_.mutable_column(i)->RebuildColumnPieceVector(view_.row_count());
+	}
+  }
  private:
   template<typename RowReader> friend class TableRowAppender;
 

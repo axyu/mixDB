@@ -94,6 +94,7 @@ void ViewPrinter::AppendRowToStream(const View& view,
       *s << Expand("NULL");
     } else {
       VariantConstPointer value = column.data_plus_offset(row_id);
+      //VariantConstPointer value = column.data_plus_offset_through_column_piece(row_id);
       string result;
       if (column.type_info().type() == ENUM) {
         *s << SucceedOrDie(column.attribute().enum_definition().

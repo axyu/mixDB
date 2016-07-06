@@ -49,6 +49,7 @@
 #include "supersonic/base/exception/exception_macros.h"
 #include "supersonic/base/infrastructure/bit_pointers.h"
 #include "supersonic/base/infrastructure/block.h"
+#include "supersonic/base/infrastructure/optimizer.h"
 #include "supersonic/base/infrastructure/tuple_schema.h"
 #include "supersonic/base/infrastructure/types.h"
 #include "supersonic/base/infrastructure/variant_pointer.h"
@@ -68,7 +69,7 @@ namespace supersonic {
 // File output.
 // --------------------------------------------------------------------
 
-static const int kMaxChunkRowCount = 8192;
+static const int kMaxChunkRowCount = Optimizer::kRowGroupSize * 2; //8192;
 
 namespace {
 

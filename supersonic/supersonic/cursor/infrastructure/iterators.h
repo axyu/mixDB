@@ -20,8 +20,9 @@
 #define SUPERSONIC_CURSOR_INFRASTRUCTURE_ITERATORS_H_
 
 #include <stddef.h>
+#include <iostream>
 
-#include <algorithm>
+//#include <algorithm>
 #include "supersonic/utils/std_namespace.h"
 #include <limits>
 #include "supersonic/utils/std_namespace.h"
@@ -480,8 +481,8 @@ class ViewRowIterator {
       const int column_index) const {
     DCHECK_LE(current_row_index(), total_row_count());
     DCHECK(!is_null(column_index));
-    //return view_.column(column_index).typed_data<type>()[row_index_];
-    return view_.column(column_index).data_plus_offset_through_column_piece(row_index_).as<type>()[0];
+    return view_.column(column_index).typed_data<type>()[row_index_];
+    //return view_.column(column_index).data_plus_offset_through_column_piece(row_index_).as<type>()[0];
   }
 
  private:

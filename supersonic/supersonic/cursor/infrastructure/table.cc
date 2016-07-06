@@ -133,6 +133,7 @@ rowcount_t Table::AppendView(const View& view, const vector<StorageType> storage
   rowcount_t rows_copied =
       view_copier_.Copy(rows_to_copy, view, row_count(), block_.get(), storage_type_vector);
   view_.ResetFromSubRange(block_->view(), 0, row_count() + rows_copied);
+  view_.ResetVisitTimes();
   return rows_copied;
 }
 
