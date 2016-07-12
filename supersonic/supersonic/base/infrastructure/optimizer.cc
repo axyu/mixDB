@@ -5,6 +5,43 @@
 
 namespace supersonic {
 
+	vector<vector<rowcount_t>> Optimizer::visit_frequency() {
+		vector<vector<rowcount_t>> visit_freq(column_count_, vector<rowcount_t>(row_group_count_, 0));
+		for(int i = 0; i < query_count_; i++) {
+			vector<int> column_id;
+			vector<double> selectivity;	
+			for(int j = 0; j < column_count_; j++) {
+				if(selectivity_->at(i)[j] < 0.0) continue;
+				else {
+					column_id.push_back(j);
+					selectivity.push_back(selectivity_->at(i)[j]);
+				}
+			}
+			for(int k = 0; k < column_id.size(); k++) {
+				for(int l = k; l < column_id.size(); l++) {
+					if(selectivity[l] < selectivity[k]) {
+						int temp_id = column_id[k];
+						double temp_selectivity = selectivity[k];
+						column_id[k] = column_id[l];
+						selectivity[k] = selectivity[l];
+						column_id[l] = temp_id;
+						selectivity[l] = temp_selectivity;
+					}
+				}
+			}
+			double accumulate_selectivity = 1.0;
+			double query_proportion = query_proportion_->at(i);
+
+			for(int m = 0; m < column_id.size(); m++) {
+				for(int n = 0; n < row_group_count_; n++) {
+					visit_freq[column_id[m]][n] += accumulate_selectivity * kRowGroupSize * query_proportion;
+				}
+				accumulate_selectivity *= selectivity[m];
+			}
+		}
+		return visit_freq;
+	}
+
 	vector<vector<bool>> Optimizer::CacheHottestGroup(const vector<vector<rowcount_t>>& visit_freq) {
 		CHECK_EQ(visit_freq.size(), column_count_);
 		CHECK_EQ(visit_freq[0].size(), row_group_count_);
@@ -47,7 +84,7 @@ namespace supersonic {
 		
 		if(!filled_) FillKnapsack();
 		// std::cout << " end subset " << std::endl;
-		int weight_limit_ = memory_limit_ / kRowGroupSize;
+		long weight_limit_ = memory_limit_ / kRowGroupSize;
 		vector<double> value(weight_limit_ + 1, 0.0);
 		vector<vector<int>> item_choice(weight_limit_ + 1, vector<int>(row_group_count_, -1));
 		for(int i = 0; i < row_group_count_; i++) {

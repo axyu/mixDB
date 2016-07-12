@@ -11,12 +11,13 @@ namespace supersonic {
 		public:
 			static const rowcount_t kRowGroupSize = 300006;//6002;
 			static const int kThreadCount = 4;
+			vector<vector<rowcount_t>> visit_frequency();
 			vector<vector<bool>> CacheHottestGroup(const vector<vector<rowcount_t>>& visit_freq);
 			// Constructor of the Optimizer class.
 			Optimizer(int row_group_count,
 					int column_count, 
 					int query_count,
-					int memory_limit,
+					long memory_limit,
 					const vector<int>* column_width,
 					const vector<double>* query_proportion,
 					const vector<vector<double>>* visit_locality,
@@ -57,7 +58,7 @@ namespace supersonic {
 			FailureOrVoid ReConfigure(int row_group_count,
 					int column_count,
 					int query_count,
-					int memory_limit,
+					long memory_limit,
 					const vector<int>* column_width,
 					const vector<double>* query_proportion,
 					const vector<vector<double>>* visit_locality,
@@ -134,7 +135,7 @@ namespace supersonic {
 			// The count of queries need to be executed.
 			int query_count_;
 			// The limit size of the main memory (Bytes).
-			int memory_limit_;
+			long memory_limit_;
 			// Items in knapsack and their value.
 			vector<vector<Items>> knapsack_;
 			// Whether the knapsack has been filled.

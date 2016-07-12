@@ -274,7 +274,7 @@ int main(int argc, char** argv) {
 
 	const rowcount_t row_group_size = Optimizer::kRowGroupSize;
 	int row_group_count = 1000;
-	int query_count = 2;
+	int query_count = 3;
 	int fact_column_count = 17;
 	int key_column_count = 4;
 	vector<int> column_width = {8, 8, 8, 8, 8, 8, 128, 128, 8, 8, 8, 8, 8, 8, 8, 8, 128};
@@ -330,7 +330,7 @@ int main(int argc, char** argv) {
 		init_visit_locality[3][i] = 0.0;
 	}
 */
-	int memory_limit = rowGroupSize * memory_width * row_group_count;
+	long memory_limit = rowGroupSize * memory_width * row_group_count;
 
 	vector<int> key_column_width = {8, 8, 8, 8};
 
@@ -369,8 +369,8 @@ int main(int argc, char** argv) {
 	vector<vector<int>> classic_filter_order_Q2_3(1000, {0, 1, 2});
 	
 	
+/*	
 	const View& classic_init_fact_view = LineorderView(init_storage_map);
-	
 	// classic initial 
 	clock_gettime(CLOCK_REALTIME, &begin);
 	// query 2.1
@@ -471,6 +471,7 @@ int main(int argc, char** argv) {
 	std::cout << "classic initial time: "	<< get_time(begin, end) << " ms." << std::endl << std::endl;
 
 	long initial_time = get_time(begin, end);
+*/
 
 	CompoundSingleSourceProjector *ag_gr_p = new CompoundSingleSourceProjector();
 	ag_gr_p->add(ProjectNamedAttribute("LO_CUSTKEY"));
@@ -478,6 +479,7 @@ int main(int argc, char** argv) {
 	ag_gr_p->add(ProjectNamedAttribute("LO_SUPPKEY"));
 	ag_gr_p->add(ProjectNamedAttribute("LO_ORDERDATE"));
 
+/*
 	// classic query 
 	vector<vector<rowcount_t>> classic_visit_freq = classic_init_fact_view.ColumnPieceVisitTimes(ag_gr_p);
 	vector<vector<bool>> classic_storage_map = optimizer->CacheHottestGroup(classic_visit_freq);
@@ -515,7 +517,7 @@ int main(int argc, char** argv) {
 		// view_printer.AppendViewToStream(rv, &cout);
 	}
 	
-	// query 2.1
+	// query 2.2
 	for(int i = 0; i < q2_2_run_time; i++) {
 		vector<Operation*> lhs_children;
 		for(int key_id = 0; key_id < dimension_schemas_Q2_2.size(); key_id++) {
@@ -546,7 +548,7 @@ int main(int argc, char** argv) {
 		// view_printer.AppendViewToStream(rv, &cout);
 	}
 
-	// query 2.1
+	// query 2.3
 	for(int i = 0; i < q2_3_run_time; i++) {
 		vector<Operation*> lhs_children;
 		for(int key_id = 0; key_id < dimension_schemas_Q2_3.size(); key_id++) {
@@ -583,6 +585,7 @@ int main(int argc, char** argv) {
 
 	std::cout << "classic query time: "	<< get_time(begin, end) << " ms." << " classic io times: " << classic_io_times << std::endl << std::endl;
 	long classic_time = get_time(begin, end);
+*/
 	
 	// optimized query
 	clock_gettime(CLOCK_REALTIME, &begin);
@@ -593,6 +596,8 @@ int main(int argc, char** argv) {
 	clock_gettime(CLOCK_REALTIME, &end);
 	std::cout << "optimized time: " << get_time(begin, end) << " ms. " << std::endl;
 
+
+/*
 	std::cout << ">>>>storage map start<<<<" << std::endl;
 	for(int i = 0; i < optimized_storage_map.size(); i++) {
 		for(int j = 0 ; j < optimized_storage_map[i].size(); j++) {
@@ -601,6 +606,7 @@ int main(int argc, char** argv) {
 		std::cout << std::endl;
 	}
 	std::cout << ">>>>storage map end<<<<" << std::endl;
+*/
 		
 	long optimize_time = get_time(begin, end);
 
@@ -708,12 +714,13 @@ int main(int argc, char** argv) {
 	long optimized_time = get_time(begin, end);
 
 	std::cout << "Result"
-	<< " q2_run_time = " << q2_run_time
-	<< " q3_run_time = " << q3_run_time
+	<< " q2_1_run_time = " << q2_1_run_time
+	<< " q2_2_run_time = " << q2_2_run_time
+	<< " q2_3_run_time = " << q2_3_run_time
 	<< " memory_width " << memory_width
 	<< " optimize_time = " << optimize_time
-	<< " initial_time = " << initial_time
-	<< " classic_time = " << classic_time
+//	<< " initial_time = " << initial_time
+//	<< " classic_time = " << classic_time
 	<< " optimized_time = " << optimized_time
 	<< std::endl;
 	
