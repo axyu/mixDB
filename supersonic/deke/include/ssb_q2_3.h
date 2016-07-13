@@ -1,5 +1,5 @@
-#ifndef INCLUDE_SSB_H
-#define INCLUDE_SSB_H
+#ifndef INCLUDE_SSB_Q2_3_H
+#define INCLUDE_SSB_Q2_3_H
 
 #include <cstdlib>
 #include <ctime>

@@ -69,8 +69,6 @@ public:
 				if(i == 5) {
 					// normal ssb test
 					not_null = (std::string(p) == "ASIA");
-					// final_test_23 0.4 also for final_test_234 0.4
-					// not_null = (std::string(p) == "AMERICA" || std::string(p) == "AFRICA");
 				}
 				p = strtok(NULL, "|");
 			}
@@ -102,17 +100,9 @@ public:
 					supplier.Set<STRING>(0, row_id, std::string(p));
 				}
 				// normal ssb test
-			
 				if(i == 5) {
 					not_null = (std::string(p) == "ASIA");
 				}
-				
-				// final_test_23 0.5 also for final_test_234 0.5
-				/*
- 				if(i == 4) {
-					not_null = (std::string(p) <= "IRAQ");
-				}
-				*/
 				p = strtok(NULL, "|");
 			}
 			if(!not_null) supplier.SetNull(0, row_id);
@@ -146,37 +136,9 @@ public:
 				// normal ssb test
 				if(i == 4) {
 					not_null = (atoi(p) >= 1992 && atoi(p) <= 1997);
-					// not_null = (atoi(p) == 1992);
 				}
-				// final_test_23 0.5
-				/*	
- 				if(i == 3) {
-					not_null = (std::string(p) <= "July");
-				}
-				*/
-				// final_test_234 0.4
-				/*
- 				if(i == 8) {
-					not_null = (atoi(p) <= 12);
-				}
-				*/
 				p = strtok(NULL, "|");
 			}
-			// 500 in 1000
-			//not_null = (row_id < 1203);
-			// 750 in 1000
-			/*
-			if((row_id * 2500 % 6002 ) + 2500 >= 6002) {
-				not_null = false;
-			} else {
-				if((row_id * 2500) / 6002 == (row_group_id + 1)) {
-					row_group_id ++;
-					not_null = row_group_id < 750;
-				} else {
-					not_null = false;
-				}
-			}
-			*/
 			if(!not_null) date.SetNull(0, row_id);
 			row_id ++;
 		}

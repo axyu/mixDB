@@ -1,5 +1,5 @@
-#ifndef INCLUDE_SSB_H
-#define INCLUDE_SSB_H
+#ifndef INCLUDE_SSB_Q4_3_H
+#define INCLUDE_SSB_Q4_3_H
 
 #include <cstdlib>
 #include <ctime>
@@ -7,28 +7,6 @@
 #include "string.h"
 
 namespace supersonic {
-
-int get_days(int from, int to) {
-	int year_from = from / 10000;
-	int month_from = (from % 10000) / 100;
-	int day_from = from % 100;
-
-	int year_to = to / 10000;
-	int month_to = (to % 10000) / 100;
-	int day_to = to % 100;
-
-	tm info_from={0};
-	info_from.tm_year = year_from-1900;
-	info_from.tm_mon = month_from-1;
-	info_from.tm_mday = day_from;
-
-	tm info_to={0};
-	info_to.tm_year = year_to-1900;
-	info_to.tm_mon = month_to-1;
-	info_to.tm_mday = day_to;
-
-	return ((int)mktime(&info_to) - (int)mktime(&info_from))/24/3600;
-}
 
 class SSB_Q4_3_Schema {
 public:

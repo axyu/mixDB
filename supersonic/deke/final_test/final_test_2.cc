@@ -1,5 +1,5 @@
-// final test 1
-// ssb query: 1/3 2.1 + 1/3 2.2 + 1/3 2.3
+// final test 2
+// ssb query: 1/3 2.1 + 1/3 3.1 + 1/3 4.2
 
 #include <iostream>
 #include "supersonic/supersonic.h"
@@ -11,10 +11,9 @@
 #include <vector>
 #include <sstream>
 #include "deke/include/visit_times_to_locality.h"
-#include "deke/include/cal_io.h"
 #include "deke/include/ssb_q2_1.h"
-#include "deke/include/ssb_q2_2.h"
-#include "deke/include/ssb_q2_3.h"
+#include "deke/include/ssb_q3_1.h"
+#include "deke/include/ssb_q4_2.h"
 
 using std::cout;
 using std::endl;
@@ -31,8 +30,8 @@ int get_time(struct timespec& begin, struct timespec& end) {
 
 const View& LineorderView(vector<vector<bool>>& storage_map) {
 	int lineorder_row_count = 300005811;
-	TupleSchema lineorder_schema = SSB_Q2_1_Schema::lineorder();	
-	File* fp = File::OpenOrDie("../../storage/lineorder_q2_1.tbl", "r");
+	TupleSchema lineorder_schema = SSB_Q4_2_Schema::lineorder();	
+	File* fp = File::OpenOrDie("../../storage/lineorder_q4_2.tbl", "r");
 	FailureOrOwned<Cursor> cu(FileInput(lineorder_schema, fp, false, HeapBufferAllocator::Get()));
 	Table* table = new Table(lineorder_schema, HeapBufferAllocator::Get());
 	vector<vector<StorageType>> storage_type_vector(storage_map.size(), vector<StorageType>(lineorder_schema.attribute_count(), DISK));
@@ -134,11 +133,32 @@ const View* DateView_Q2_1() {
 	return &table->view();
 }
 
-// dimension tables for Q2_2 with different selectivity
-const View* SupplierView_Q2_2() {
+// dimension tables for Q3_1 with different selectivity
+
+const View* CustomerView_Q3_1() {
+	int customer_row_count = 1500001;
+	TupleSchema customer_schema = SSB_Q3_1_Schema::customer();
+	File* fp = File::OpenOrDie("../../storage/customer_q3_1.tbl", "r");
+	FailureOrOwned<Cursor> cu(FileInput(customer_schema, fp, false, HeapBufferAllocator::Get()));
+	Table* table = new Table(customer_schema, HeapBufferAllocator::Get());
+	vector<StorageType> storage_type(1, MEMORY);
+	vector<rowcount_t> in_memory_row_capacity_vector(1, customer_row_count);
+	table->ReserveRowCapacityOneTime(customer_row_count, in_memory_row_capacity_vector);
+	while(1) {
+		ResultView result(cu->Next(rowGroupSize));
+		if(result.has_data()) {
+			table->AppendView(result.view(), storage_type);
+		} else {
+			break;
+		}
+	}
+	return &table->view();
+}
+
+const View* SupplierView_Q3_1() {
 	int supplier_row_count = 100001;
-	TupleSchema supplier_schema = SSB_Q2_2_Schema::supplier();
-	File* fp = File::OpenOrDie("../../storage/supplier_q2_2.tbl", "r");
+	TupleSchema supplier_schema = SSB_Q3_1_Schema::supplier();
+	File* fp = File::OpenOrDie("../../storage/supplier_q3_1.tbl", "r");
 	FailureOrOwned<Cursor> cu(FileInput(supplier_schema, fp, false, HeapBufferAllocator::Get()));
 	Table* table = new Table(supplier_schema, HeapBufferAllocator::Get());
 	vector<StorageType> storage_type(1, MEMORY);
@@ -156,32 +176,10 @@ const View* SupplierView_Q2_2() {
 	return &table->view();
 }
 
-
-const View* PartView_Q2_2() {
-	int supplier_row_count = 1200001;
-	TupleSchema supplier_schema = SSB_Q2_2_Schema::part();
-	File* fp = File::OpenOrDie("../../storage/part_q2_2.tbl", "r");
-	FailureOrOwned<Cursor> cu(FileInput(supplier_schema, fp, false, HeapBufferAllocator::Get()));
-	Table* table = new Table(supplier_schema, HeapBufferAllocator::Get());
-	vector<StorageType> storage_type(1, MEMORY);
-	vector<rowcount_t> in_memory_row_capacity_vector(1, supplier_row_count);
-	table->ReserveRowCapacityOneTime(supplier_row_count, in_memory_row_capacity_vector);
-	while(1) {
-		ResultView result(cu->Next(rowGroupSize));
-		if(result.has_data()) {
-			
-			table->AppendView(result.view(), storage_type);
-		} else {
-			break;
-		}
-	}
-	return &table->view();
-}
-
-const View* DateView_Q2_2() {
+const View* DateView_Q3_1() {
 	int date_row_count = 2556;
-	TupleSchema date_schema = SSB_Q2_2_Schema::date();
-	File* fp = File::OpenOrDie("../../storage/date_q2_2.tbl", "r");
+	TupleSchema date_schema = SSB_Q3_1_Schema::date();
+	File* fp = File::OpenOrDie("../../storage/date_q3_1.tbl", "r");
 	FailureOrOwned<Cursor> cu(FileInput(date_schema, fp, false, HeapBufferAllocator::Get()));
 	Table* table = new Table(date_schema, HeapBufferAllocator::Get());
 	vector<StorageType> storage_type(1, MEMORY);
@@ -198,10 +196,31 @@ const View* DateView_Q2_2() {
 	return &table->view();
 }
 
-const View* SupplierView_Q2_3() {
+// dimension tables for Q4
+const View* CustomerView_Q4_2() {
+	int customer_row_count = 1500001;
+	TupleSchema customer_schema = SSB_Q4_2_Schema::customer();
+	File* fp = File::OpenOrDie("../../storage/customer_q4_2.tbl", "r");
+	FailureOrOwned<Cursor> cu(FileInput(customer_schema, fp, false, HeapBufferAllocator::Get()));
+	Table* table = new Table(customer_schema, HeapBufferAllocator::Get());
+	vector<StorageType> storage_type(1, MEMORY);
+	vector<rowcount_t> in_memory_row_capacity_vector(1, customer_row_count);
+	table->ReserveRowCapacityOneTime(customer_row_count, in_memory_row_capacity_vector);
+	while(1) {
+		ResultView result(cu->Next(rowGroupSize));
+		if(result.has_data()) {
+			table->AppendView(result.view(), storage_type);
+		} else {
+			break;
+		}
+	}
+	return &table->view();
+}
+
+const View* SupplierView_Q4_2() {
 	int supplier_row_count = 100001;
-	TupleSchema supplier_schema = SSB_Q2_3_Schema::supplier();
-	File* fp = File::OpenOrDie("../../storage/supplier_q2_3.tbl", "r");
+	TupleSchema supplier_schema = SSB_Q4_2_Schema::supplier();
+	File* fp = File::OpenOrDie("../../storage/supplier_q4_2.tbl", "r");
 	FailureOrOwned<Cursor> cu(FileInput(supplier_schema, fp, false, HeapBufferAllocator::Get()));
 	Table* table = new Table(supplier_schema, HeapBufferAllocator::Get());
 	vector<StorageType> storage_type(1, MEMORY);
@@ -219,20 +238,18 @@ const View* SupplierView_Q2_3() {
 	return &table->view();
 }
 
-
-const View* PartView_Q2_3() {
-	int supplier_row_count = 1200001;
-	TupleSchema supplier_schema = SSB_Q2_3_Schema::part();
-	File* fp = File::OpenOrDie("../../storage/part_q2_3.tbl", "r");
-	FailureOrOwned<Cursor> cu(FileInput(supplier_schema, fp, false, HeapBufferAllocator::Get()));
-	Table* table = new Table(supplier_schema, HeapBufferAllocator::Get());
+const View* PartView_Q4_2() {
+	int date_row_count = 1200001;
+	TupleSchema date_schema = SSB_Q4_2_Schema::part();
+	File* fp = File::OpenOrDie("../../storage/part_q4_2.tbl", "r");
+	FailureOrOwned<Cursor> cu(FileInput(date_schema, fp, false, HeapBufferAllocator::Get()));
+	Table* table = new Table(date_schema, HeapBufferAllocator::Get());
 	vector<StorageType> storage_type(1, MEMORY);
-	vector<rowcount_t> in_memory_row_capacity_vector(1, supplier_row_count);
-	table->ReserveRowCapacityOneTime(supplier_row_count, in_memory_row_capacity_vector);
+	vector<rowcount_t> in_memory_row_capacity_vector(1, date_row_count);
+	table->ReserveRowCapacityOneTime(date_row_count, in_memory_row_capacity_vector);
 	while(1) {
 		ResultView result(cu->Next(rowGroupSize));
 		if(result.has_data()) {
-			
 			table->AppendView(result.view(), storage_type);
 		} else {
 			break;
@@ -241,10 +258,10 @@ const View* PartView_Q2_3() {
 	return &table->view();
 }
 
-const View* DateView_Q2_3() {
+const View* DateView_Q4_2() {
 	int date_row_count = 2556;
-	TupleSchema date_schema = SSB_Q2_3_Schema::date();
-	File* fp = File::OpenOrDie("../../storage/date_q2_3.tbl", "r");
+	TupleSchema date_schema = SSB_Q4_2_Schema::date();
+	File* fp = File::OpenOrDie("../../storage/date_q4_2.tbl", "r");
 	FailureOrOwned<Cursor> cu(FileInput(date_schema, fp, false, HeapBufferAllocator::Get()));
 	Table* table = new Table(date_schema, HeapBufferAllocator::Get());
 	vector<StorageType> storage_type(1, MEMORY);
@@ -263,38 +280,41 @@ const View* DateView_Q2_3() {
 
 int main(int argc, char** argv) {
 	if(argc != 5) {
-		std::cout << "./this q2_1_run_time q2_2_run_time q2_3_run_time memory_width" << std::endl;
+		std::cout << "./this q2_run_time q3_run_time q4_run_time memory_width" << std::endl;
 		exit(-1);
 	}
 
-	int q2_1_run_time = atoi(argv[1]);
-	int q2_2_run_time = atoi(argv[2]);
-	int q2_3_run_time = atoi(argv[3]);
+	int q2_run_time = atoi(argv[1]);
+	int q3_run_time = atoi(argv[2]);
+	int q4_run_time = atoi(argv[3]);
 	int memory_width = atoi(argv[4]);
 
 	const rowcount_t row_group_size = Optimizer::kRowGroupSize;
 	int row_group_count = 1000;
 	int query_count = 3;
-	int fact_column_count = 17;
+	int fact_column_count = 18;
 	int key_column_count = 4;
-	vector<int> column_width = {8, 8, 8, 8, 8, 8, 128, 128, 8, 8, 8, 8, 8, 8, 8, 8, 128};
+	vector<int> column_width = {8, 8, 8, 8, 8, 8, 128, 128, 8, 8, 8, 8, 8, 8, 8, 8, 128, 8};
 	vector<double> query_proportion;// = {0.5, 0.5};
-	query_proportion.push_back(q2_1_run_time * 1.0 / (q2_1_run_time + q2_2_run_time + q2_3_run_time));
-	query_proportion.push_back(q2_2_run_time * 1.0 / (q2_1_run_time + q2_2_run_time + q2_3_run_time));
-	query_proportion.push_back(q2_3_run_time * 1.0 / (q2_1_run_time + q2_2_run_time + q2_3_run_time));
+	query_proportion.push_back(q2_run_time * 1.0 / (q2_run_time + q3_run_time + q4_run_time));
+	query_proportion.push_back(q3_run_time * 1.0 / (q2_run_time + q3_run_time + q4_run_time));
+	query_proportion.push_back(q4_run_time * 1.0 / (q2_run_time + q3_run_time + q4_run_time));
 
-	std::cout << "query_proportion : " << query_proportion[0] << " " << query_proportion[1] << " " << query_proportion[2] << std::endl;	
+	std::cout << "query_proportion : " 
+	<< query_proportion[0] << " " 
+	<< query_proportion[1] << " "
+	<< query_proportion[2] << std::endl;	
 
 	vector<vector<double>> selectivity;
 	// cuskey partkey suppkey orderdate
-	vector<double> element1 = {-1, 1.0/25, 1.0/5, 1};
-	vector<double> element2 = {-1, 1.0/125, 1.0/5, 1};
-	vector<double> element3 = {-1, 1.0/1000, 1.0/5, 1};
+	vector<double> element1 = {-1, 1.0 / 25, 1.0 / 5, 1};
+	vector<double> element2 = {1.0 / 5, -1, 1.0 / 5, 6.0 / 7};
+	vector<double> element3 = {1.0 / 5, 2.0 / 5, 1.0 / 5, 2.0 / 7};
 	selectivity.push_back(element1);
 	selectivity.push_back(element2);
 	selectivity.push_back(element3);
 
-	TupleSchema fact_schema = SSB_Q2_1_Schema::lineorder();
+	TupleSchema fact_schema = SSB_Q4_2_Schema::lineorder();
 
 	vector<TupleSchema> dimension_schemas_Q2_1;
 	TupleSchema dimension1_schema_Q2_1 = SSB_Q2_1_Schema::part();
@@ -303,34 +323,28 @@ int main(int argc, char** argv) {
 	dimension_schemas_Q2_1.push_back(dimension1_schema_Q2_1);
 	dimension_schemas_Q2_1.push_back(dimension2_schema_Q2_1);
 	dimension_schemas_Q2_1.push_back(dimension3_schema_Q2_1);
-
-	vector<TupleSchema> dimension_schemas_Q2_2;
-	TupleSchema dimension1_schema_Q2_2 = SSB_Q2_2_Schema::part();
-	TupleSchema dimension2_schema_Q2_2 = SSB_Q2_2_Schema::supplier();
-	TupleSchema dimension3_schema_Q2_2 = SSB_Q2_2_Schema::date();
-	dimension_schemas_Q2_2.push_back(dimension1_schema_Q2_2);
-	dimension_schemas_Q2_2.push_back(dimension2_schema_Q2_2);
-	dimension_schemas_Q2_2.push_back(dimension3_schema_Q2_2);
-
-	vector<TupleSchema> dimension_schemas_Q2_3;
-	TupleSchema dimension1_schema_Q2_3 = SSB_Q2_3_Schema::part();
-	TupleSchema dimension2_schema_Q2_3 = SSB_Q2_3_Schema::supplier();
-	TupleSchema dimension3_schema_Q2_3 = SSB_Q2_3_Schema::date();
-	dimension_schemas_Q2_3.push_back(dimension1_schema_Q2_3);
-	dimension_schemas_Q2_3.push_back(dimension2_schema_Q2_3);
-	dimension_schemas_Q2_3.push_back(dimension3_schema_Q2_3);
 	
+	vector<TupleSchema> dimension_schemas_Q3_1;
+	TupleSchema dimension1_schema_Q3_1 = SSB_Q3_1_Schema::customer();
+	TupleSchema dimension2_schema_Q3_1 = SSB_Q3_1_Schema::supplier();
+	TupleSchema dimension3_schema_Q3_1 = SSB_Q3_1_Schema::date();
+	dimension_schemas_Q3_1.push_back(dimension1_schema_Q3_1);
+	dimension_schemas_Q3_1.push_back(dimension2_schema_Q3_1);
+	dimension_schemas_Q3_1.push_back(dimension3_schema_Q3_1);
+
+	vector<TupleSchema> dimension_schemas_Q4_2;
+	TupleSchema dimension1_schema_Q4_2 = SSB_Q4_2_Schema::customer();
+	TupleSchema dimension2_schema_Q4_2 = SSB_Q4_2_Schema::part();
+	TupleSchema dimension3_schema_Q4_2 = SSB_Q4_2_Schema::supplier();
+	TupleSchema dimension4_schema_Q4_2 = SSB_Q4_2_Schema::date();
+	dimension_schemas_Q4_2.push_back(dimension1_schema_Q4_2);
+	dimension_schemas_Q4_2.push_back(dimension2_schema_Q4_2);
+	dimension_schemas_Q4_2.push_back(dimension3_schema_Q4_2);
+	dimension_schemas_Q4_2.push_back(dimension4_schema_Q4_2);
 
 	vector<vector<double>> init_visit_locality(4, vector<double>(1000, 0.001));
-/*
-	for(int i = 0; i < 750; i++) {
-		init_visit_locality[3][i] = 1 * 1.0 / 750;
-	}
-	for(int i = 750; i < 1000; i++) {
-		init_visit_locality[3][i] = 0.0;
-	}
-*/
-	long memory_limit = rowGroupSize * memory_width * row_group_count;
+
+	double memory_limit = rowGroupSize * memory_width * row_group_count;
 
 	vector<int> key_column_width = {8, 8, 8, 8};
 
@@ -349,15 +363,16 @@ int main(int argc, char** argv) {
 	dimension_views_Q2_1.push_back(SupplierView_Q2_1());
 	dimension_views_Q2_1.push_back(DateView_Q2_1());
 
-	vector<const View*> dimension_views_Q2_2;
-	dimension_views_Q2_2.push_back(PartView_Q2_2());
-	dimension_views_Q2_2.push_back(SupplierView_Q2_2());
-	dimension_views_Q2_2.push_back(DateView_Q2_2());
+	vector<const View*> dimension_views_Q3_1;
+	dimension_views_Q3_1.push_back(CustomerView_Q3_1());
+	dimension_views_Q3_1.push_back(SupplierView_Q3_1());
+	dimension_views_Q3_1.push_back(DateView_Q3_1());
 
-	vector<const View*> dimension_views_Q2_3;
-	dimension_views_Q2_3.push_back(PartView_Q2_3());
-	dimension_views_Q2_3.push_back(SupplierView_Q2_3());
-	dimension_views_Q2_3.push_back(DateView_Q2_3());
+	vector<const View*> dimension_views_Q4_2;
+	dimension_views_Q4_2.push_back(CustomerView_Q4_2());
+	dimension_views_Q4_2.push_back(PartView_Q4_2());
+	dimension_views_Q4_2.push_back(SupplierView_Q4_2());
+	dimension_views_Q4_2.push_back(DateView_Q4_2());
 
 	std::cout<<">>>>>>>>>>>>calculate start<<<<<<<<<<<<<<"<<std::endl;
 
@@ -365,8 +380,9 @@ int main(int argc, char** argv) {
 	struct timespec begin, end;
 
 	vector<vector<int>> classic_filter_order_Q2_1(1000, {0, 1, 2});
-	vector<vector<int>> classic_filter_order_Q2_2(1000, {0, 1, 2});
-	vector<vector<int>> classic_filter_order_Q2_3(1000, {0, 1, 2});
+	vector<vector<int>> classic_filter_order_Q3_1(1000, {0, 1, 2});
+	vector<vector<int>> classic_filter_order_Q4_2(1000, {0, 2, 3, 1});
+	
 
 	CompoundSingleSourceProjector *ag_gr_p = new CompoundSingleSourceProjector();
 	ag_gr_p->add(ProjectNamedAttribute("LO_CUSTKEY"));
@@ -380,8 +396,7 @@ int main(int argc, char** argv) {
 	
 	const View& classic_fact_view = LineorderView(classic_storage_map);
 	clock_gettime(CLOCK_REALTIME, &begin);
-	// query 2.1
-	for(int i = 0; i < q2_1_run_time; i++) {
+	for(int i = 0; i < q2_run_time; i++) {
 		vector<Operation*> lhs_children;
 		for(int key_id = 0; key_id < dimension_schemas_Q2_1.size(); key_id++) {
 			lhs_children.push_back(ScanView(*dimension_views_Q2_1[key_id]));
@@ -410,85 +425,83 @@ int main(int argc, char** argv) {
 		// ViewPrinter view_printer;
 		// view_printer.AppendViewToStream(rv, &cout);
 	}
-	
-	// query 2.2
-	for(int i = 0; i < q2_2_run_time; i++) {
+
+	for(int i = 0; i < q3_run_time; i++) {
 		vector<Operation*> lhs_children;
-		for(int key_id = 0; key_id < dimension_schemas_Q2_2.size(); key_id++) {
-			lhs_children.push_back(ScanView(*dimension_views_Q2_2[key_id]));
+		for(int key_id = 0; key_id < dimension_schemas_Q3_1.size(); key_id++) {
+			lhs_children.push_back(ScanView(*dimension_views_Q3_1[key_id]));
 		}
 		Operation* fact_operation = ScanView(classic_fact_view);
 
+
 		CompoundSingleSourceProjector *ag_gr_p = new CompoundSingleSourceProjector();
-		ag_gr_p->add(ProjectNamedAttribute("LO_PARTKEY"));
+		ag_gr_p->add(ProjectNamedAttribute("LO_CUSTKEY"));
 		ag_gr_p->add(ProjectNamedAttribute("LO_SUPPKEY"));
 		ag_gr_p->add(ProjectNamedAttribute("LO_ORDERDATE"));
 
 		vector<int> group_id;
 		group_id.push_back(0);
+		group_id.push_back(1);
 		group_id.push_back(2);
 
 		AggregationSpecification *ag_spe = new AggregationSpecification();
 		ag_spe->AddAggregation(SUM, "LO_REVENUE", "SUM_REVENUE");
-		scoped_ptr<Operation> ag(MeasureAggregate(ag_gr_p, group_id, ag_spe, NULL, &classic_filter_order_Q2_2, lhs_children, fact_operation));
+		scoped_ptr<Operation> ag(MeasureAggregate(ag_gr_p, group_id, ag_spe, NULL, &classic_filter_order_Q3_1, lhs_children, fact_operation));
 		scoped_ptr<Cursor> cr(SucceedOrDie(ag->CreateCursor()));
 
-		std::cout<<"classic q2_2 begin caculate"<<std::endl;
+		std::cout<<"classic q3_1 begin caculate"<<std::endl;
 
 		ResultView resv(ResultView(cr->Next(-1)));
 		View rv(resv.view());
-		std::cout << "classic q2_2 result" << std::endl;
+		std::cout << "classic q3_1 result" << std::endl;
 		// ViewPrinter view_printer;
 		// view_printer.AppendViewToStream(rv, &cout);
 	}
-
-	// query 2.3
-	for(int i = 0; i < q2_3_run_time; i++) {
+	for(int i = 0; i < q4_run_time; i++) {
 		vector<Operation*> lhs_children;
-		for(int key_id = 0; key_id < dimension_schemas_Q2_3.size(); key_id++) {
-			lhs_children.push_back(ScanView(*dimension_views_Q2_3[key_id]));
+		for(int key_id = 0; key_id < dimension_schemas_Q4_2.size(); key_id++) {
+			lhs_children.push_back(ScanView(*dimension_views_Q4_2[key_id]));
 		}
 		Operation* fact_operation = ScanView(classic_fact_view);
 
 		CompoundSingleSourceProjector *ag_gr_p = new CompoundSingleSourceProjector();
+		ag_gr_p->add(ProjectNamedAttribute("LO_CUSTKEY"));
 		ag_gr_p->add(ProjectNamedAttribute("LO_PARTKEY"));
 		ag_gr_p->add(ProjectNamedAttribute("LO_SUPPKEY"));
 		ag_gr_p->add(ProjectNamedAttribute("LO_ORDERDATE"));
 
 		vector<int> group_id;
-		group_id.push_back(0);
+		group_id.push_back(1);
 		group_id.push_back(2);
+		group_id.push_back(3);
 
 		AggregationSpecification *ag_spe = new AggregationSpecification();
-		ag_spe->AddAggregation(SUM, "LO_REVENUE", "SUM_REVENUE");
-		scoped_ptr<Operation> ag(MeasureAggregate(ag_gr_p, group_id, ag_spe, NULL, &classic_filter_order_Q2_3, lhs_children, fact_operation));
+		ag_spe->AddAggregation(SUM, "LO_AGGVALUE", "SUM_AGGVALUE");
+		scoped_ptr<Operation> ag(MeasureAggregate(ag_gr_p, group_id, ag_spe, NULL, &classic_filter_order_Q4_2, lhs_children, fact_operation));
 		scoped_ptr<Cursor> cr(SucceedOrDie(ag->CreateCursor()));
 
-		std::cout<<"classic q2_3 begin caculate"<<std::endl;
+		std::cout<<"classic q4_2 begin caculate"<<std::endl;
 
 		ResultView resv(ResultView(cr->Next(-1)));
 		View rv(resv.view());
-		std::cout << "classic q2_3 result" << std::endl;
+		std::cout << "classic q4_2 result" << std::endl;
 		// ViewPrinter view_printer;
 		// view_printer.AppendViewToStream(rv, &cout);
 	}
 	clock_gettime(CLOCK_REALTIME, &end);
+	std::cout << "classic query time: "	<< get_time(begin, end) << " ms." << std::endl << std::endl;
 
-	vector<vector<rowcount_t>> visit_freq = classic_fact_view.ColumnPieceVisitTimes(ag_gr_p);
-	long classic_io_times = calculate_io(visit_freq, classic_storage_map, key_column_width);
-
-	std::cout << "classic query time: "	<< get_time(begin, end) << " ms." << " classic io times: " << classic_io_times << std::endl << std::endl;
 	long classic_time = get_time(begin, end);
 	
 	// optimized query
 	clock_gettime(CLOCK_REALTIME, &begin);
 	vector<vector<bool>> optimized_storage_map = *optimizer->optimized_storage_map();
 	vector<vector<int>> optimized_filter_order_Q2_1 = *optimizer->optimized_filter_order(0);
-	vector<vector<int>> optimized_filter_order_Q2_2 = *optimizer->optimized_filter_order(1);
-	vector<vector<int>> optimized_filter_order_Q2_3 = *optimizer->optimized_filter_order(2);
+	vector<vector<int>> optimized_filter_order_Q3_1 = *optimizer->optimized_filter_order(1);
+	vector<vector<int>> optimized_filter_order_Q4_2 = *optimizer->optimized_filter_order(2);
+
 	clock_gettime(CLOCK_REALTIME, &end);
 	std::cout << "optimized time: " << get_time(begin, end) << " ms. " << std::endl;
-
 	std::cout << ">>>>storage map start<<<<" << std::endl;
 	for(int i = 0; i < optimized_storage_map.size(); i++) {
 		for(int j = 0 ; j < optimized_storage_map[i].size(); j++) {
@@ -497,13 +510,11 @@ int main(int argc, char** argv) {
 		std::cout << std::endl;
 	}
 	std::cout << ">>>>storage map end<<<<" << std::endl;
-		
 	long optimize_time = get_time(begin, end);
 
 	const View& optimized_fact_view = LineorderView(optimized_storage_map);
 	clock_gettime(CLOCK_REALTIME, &begin);
-	// query 2.1
-	for(int i = 0; i < q2_1_run_time; i++) {
+	for(int i = 0; i < q2_run_time; i++) {
 		vector<Operation*> lhs_children;
 		for(int key_id = 0; key_id < dimension_schemas_Q2_1.size(); key_id++) {
 			lhs_children.push_back(ScanView(*dimension_views_Q2_1[key_id]));
@@ -532,81 +543,78 @@ int main(int argc, char** argv) {
 		// ViewPrinter view_printer;
 		// view_printer.AppendViewToStream(rv, &cout);
 	}
-	
-	// query 2.2
-	for(int i = 0; i < q2_2_run_time; i++) {
+
+	for(int i = 0; i < q3_run_time; i++) {
 		vector<Operation*> lhs_children;
-		for(int key_id = 0; key_id < dimension_schemas_Q2_2.size(); key_id++) {
-			lhs_children.push_back(ScanView(*dimension_views_Q2_2[key_id]));
+		for(int key_id = 0; key_id < dimension_schemas_Q3_1.size(); key_id++) {
+			lhs_children.push_back(ScanView(*dimension_views_Q3_1[key_id]));
 		}
 		Operation* fact_operation = ScanView(optimized_fact_view);
 
 		CompoundSingleSourceProjector *ag_gr_p = new CompoundSingleSourceProjector();
-		ag_gr_p->add(ProjectNamedAttribute("LO_PARTKEY"));
+		ag_gr_p->add(ProjectNamedAttribute("LO_CUSTKEY"));
 		ag_gr_p->add(ProjectNamedAttribute("LO_SUPPKEY"));
 		ag_gr_p->add(ProjectNamedAttribute("LO_ORDERDATE"));
 
 		vector<int> group_id;
 		group_id.push_back(0);
+		group_id.push_back(1);
 		group_id.push_back(2);
 
 		AggregationSpecification *ag_spe = new AggregationSpecification();
 		ag_spe->AddAggregation(SUM, "LO_REVENUE", "SUM_REVENUE");
-		scoped_ptr<Operation> ag(MeasureAggregate(ag_gr_p, group_id, ag_spe, NULL, &optimized_filter_order_Q2_2, lhs_children, fact_operation));
+		scoped_ptr<Operation> ag(MeasureAggregate(ag_gr_p, group_id, ag_spe, NULL, &optimized_filter_order_Q3_1, lhs_children, fact_operation));
 		scoped_ptr<Cursor> cr(SucceedOrDie(ag->CreateCursor()));
 
-		std::cout<<"optimized q2_2 begin caculate"<<std::endl;
+		std::cout<<"optimized q3_1 begin caculate"<<std::endl;
 
 		ResultView resv(ResultView(cr->Next(-1)));
 		View rv(resv.view());
-		std::cout << "optimized q2_2 result" << std::endl;
+		std::cout << "optimized q3_1 result" << std::endl;
 		// ViewPrinter view_printer;
 		// view_printer.AppendViewToStream(rv, &cout);
 	}
-
-	// query 2.3
-	for(int i = 0; i < q2_3_run_time; i++) {
+	for(int i = 0; i < q4_run_time; i++) {
 		vector<Operation*> lhs_children;
-		for(int key_id = 0; key_id < dimension_schemas_Q2_3.size(); key_id++) {
-			lhs_children.push_back(ScanView(*dimension_views_Q2_3[key_id]));
+		for(int key_id = 0; key_id < dimension_schemas_Q4_2.size(); key_id++) {
+			lhs_children.push_back(ScanView(*dimension_views_Q4_2[key_id]));
 		}
 		Operation* fact_operation = ScanView(optimized_fact_view);
 
 		CompoundSingleSourceProjector *ag_gr_p = new CompoundSingleSourceProjector();
+		ag_gr_p->add(ProjectNamedAttribute("LO_CUSTKEY"));
 		ag_gr_p->add(ProjectNamedAttribute("LO_PARTKEY"));
 		ag_gr_p->add(ProjectNamedAttribute("LO_SUPPKEY"));
 		ag_gr_p->add(ProjectNamedAttribute("LO_ORDERDATE"));
 
 		vector<int> group_id;
-		group_id.push_back(0);
+		group_id.push_back(1);
 		group_id.push_back(2);
+		group_id.push_back(3);
 
 		AggregationSpecification *ag_spe = new AggregationSpecification();
-		ag_spe->AddAggregation(SUM, "LO_REVENUE", "SUM_REVENUE");
-		scoped_ptr<Operation> ag(MeasureAggregate(ag_gr_p, group_id, ag_spe, NULL, &optimized_filter_order_Q2_3, lhs_children, fact_operation));
+		ag_spe->AddAggregation(SUM, "LO_AGGVALUE", "SUM_AGGVALUE");
+		scoped_ptr<Operation> ag(MeasureAggregate(ag_gr_p, group_id, ag_spe, NULL, &optimized_filter_order_Q4_2, lhs_children, fact_operation));
 		scoped_ptr<Cursor> cr(SucceedOrDie(ag->CreateCursor()));
 
-		std::cout<<"optimized q2_3 begin caculate"<<std::endl;
+		std::cout<<"optimized q4_2 begin caculate"<<std::endl;
 
 		ResultView resv(ResultView(cr->Next(-1)));
 		View rv(resv.view());
-		std::cout << "optimized q2_3 result" << std::endl;
+		std::cout << "optimized q4_2 result" << std::endl;
 		// ViewPrinter view_printer;
 		// view_printer.AppendViewToStream(rv, &cout);
 	}
+
 	clock_gettime(CLOCK_REALTIME, &end);
-
-	vector<vector<rowcount_t>> optimized_visit_freq = optimized_fact_view.ColumnPieceVisitTimes(ag_gr_p);
-	long optimized_io_times = calculate_io(optimized_visit_freq, optimized_storage_map, key_column_width);
-
-	std::cout << "optimized query time: "	<< get_time(begin, end) << " ms." << " optimized io times: " << optimized_io_times << std::endl << std::endl;
+	std::cout << "optimized query time: "	<< get_time(begin, end) << " ms." << std::endl << std::endl;
 
 	long optimized_time = get_time(begin, end);
 
 	std::cout << "Result"
-	<< " q2_1_run_time = " << q2_1_run_time
-	<< " q2_2_run_time = " << q2_2_run_time
-	<< " q2_3_run_time = " << q2_3_run_time
+	<< " q2_run_time = " << q2_run_time
+	<< " q3_run_time = " << q3_run_time
+	<< " q4_run_time = " << q4_run_time
 	<< " memory_width " << memory_width
 	<< " optimize_time = " << optimize_time
 	<< " classic_time = " << classic_time

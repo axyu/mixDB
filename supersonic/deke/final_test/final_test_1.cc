@@ -367,111 +367,6 @@ int main(int argc, char** argv) {
 	vector<vector<int>> classic_filter_order_Q2_1(1000, {0, 1, 2});
 	vector<vector<int>> classic_filter_order_Q2_2(1000, {0, 1, 2});
 	vector<vector<int>> classic_filter_order_Q2_3(1000, {0, 1, 2});
-	
-	
-/*	
-	const View& classic_init_fact_view = LineorderView(init_storage_map);
-	// classic initial 
-	clock_gettime(CLOCK_REALTIME, &begin);
-	// query 2.1
-	for(int i = 0; i < q2_1_run_time; i++) {
-		vector<Operation*> lhs_children;
-		for(int key_id = 0; key_id < dimension_schemas_Q2_1.size(); key_id++) {
-			lhs_children.push_back(ScanView(*dimension_views_Q2_1[key_id]));
-		}
-		Operation* fact_operation = ScanView(classic_init_fact_view);
-
-		CompoundSingleSourceProjector *ag_gr_p = new CompoundSingleSourceProjector();
-		ag_gr_p->add(ProjectNamedAttribute("LO_PARTKEY"));
-		ag_gr_p->add(ProjectNamedAttribute("LO_SUPPKEY"));
-		ag_gr_p->add(ProjectNamedAttribute("LO_ORDERDATE"));
-
-		vector<int> group_id;
-		group_id.push_back(0);
-		group_id.push_back(2);
-
-		AggregationSpecification *ag_spe = new AggregationSpecification();
-		ag_spe->AddAggregation(SUM, "LO_REVENUE", "SUM_REVENUE");
-		scoped_ptr<Operation> ag(MeasureAggregate(ag_gr_p, group_id, ag_spe, NULL, &classic_filter_order_Q2_1, lhs_children, fact_operation));
-		scoped_ptr<Cursor> cr(SucceedOrDie(ag->CreateCursor()));
-
-		std::cout<<"q2_1 begin caculate"<<std::endl;
-
-		ResultView resv(ResultView(cr->Next(-1)));
-		View rv(resv.view());
-		std::cout << "q2_1 result" << std::endl;
-		ViewPrinter view_printer;
-		view_printer.AppendViewToStream(rv, &cout);
-	}
-
-	// query 2.2
-	for(int i = 0; i < q2_2_run_time; i++) {
-		vector<Operation*> lhs_children;
-		for(int key_id = 0; key_id < dimension_schemas_Q2_2.size(); key_id++) {
-			lhs_children.push_back(ScanView(*dimension_views_Q2_2[key_id]));
-		}
-		Operation* fact_operation = ScanView(classic_init_fact_view);
-
-		CompoundSingleSourceProjector *ag_gr_p = new CompoundSingleSourceProjector();
-		ag_gr_p->add(ProjectNamedAttribute("LO_PARTKEY"));
-		ag_gr_p->add(ProjectNamedAttribute("LO_SUPPKEY"));
-		ag_gr_p->add(ProjectNamedAttribute("LO_ORDERDATE"));
-
-		vector<int> group_id;
-		group_id.push_back(0);
-		group_id.push_back(2);
-
-		AggregationSpecification *ag_spe = new AggregationSpecification();
-		ag_spe->AddAggregation(SUM, "LO_REVENUE", "SUM_REVENUE");
-		scoped_ptr<Operation> ag(MeasureAggregate(ag_gr_p, group_id, ag_spe, NULL, &classic_filter_order_Q2_2, lhs_children, fact_operation));
-		scoped_ptr<Cursor> cr(SucceedOrDie(ag->CreateCursor()));
-
-		std::cout<<"q2_2 begin caculate"<<std::endl;
-
-		ResultView resv(ResultView(cr->Next(-1)));
-		View rv(resv.view());
-		std::cout << "q2_2 result" << std::endl;
-		ViewPrinter view_printer;
-		view_printer.AppendViewToStream(rv, &cout);
-	}
-
-	// query 2.3
-	for(int i = 0; i < q2_3_run_time; i++) {
-		vector<Operation*> lhs_children;
-		for(int key_id = 0; key_id < dimension_schemas_Q2_3.size(); key_id++) {
-			lhs_children.push_back(ScanView(*dimension_views_Q2_3[key_id]));
-		}
-		Operation* fact_operation = ScanView(classic_init_fact_view);
-
-		CompoundSingleSourceProjector *ag_gr_p = new CompoundSingleSourceProjector();
-		ag_gr_p->add(ProjectNamedAttribute("LO_PARTKEY"));
-		ag_gr_p->add(ProjectNamedAttribute("LO_SUPPKEY"));
-		ag_gr_p->add(ProjectNamedAttribute("LO_ORDERDATE"));
-
-		vector<int> group_id;
-		group_id.push_back(0);
-		group_id.push_back(2);
-
-		AggregationSpecification *ag_spe = new AggregationSpecification();
-		ag_spe->AddAggregation(SUM, "LO_REVENUE", "SUM_REVENUE");
-		scoped_ptr<Operation> ag(MeasureAggregate(ag_gr_p, group_id, ag_spe, NULL, &classic_filter_order_Q2_3, lhs_children, fact_operation));
-		scoped_ptr<Cursor> cr(SucceedOrDie(ag->CreateCursor()));
-
-		std::cout<<"q2_3 begin caculate"<<std::endl;
-
-		ResultView resv(ResultView(cr->Next(-1)));
-		View rv(resv.view());
-		std::cout << "q2_3 result" << std::endl;
-		ViewPrinter view_printer;
-		view_printer.AppendViewToStream(rv, &cout);
-	}
-
-	clock_gettime(CLOCK_REALTIME, &end);
-
-	std::cout << "classic initial time: "	<< get_time(begin, end) << " ms." << std::endl << std::endl;
-
-	long initial_time = get_time(begin, end);
-*/
 
 	CompoundSingleSourceProjector *ag_gr_p = new CompoundSingleSourceProjector();
 	ag_gr_p->add(ProjectNamedAttribute("LO_CUSTKEY"));
@@ -479,9 +374,8 @@ int main(int argc, char** argv) {
 	ag_gr_p->add(ProjectNamedAttribute("LO_SUPPKEY"));
 	ag_gr_p->add(ProjectNamedAttribute("LO_ORDERDATE"));
 
-/*
 	// classic query 
-	vector<vector<rowcount_t>> classic_visit_freq = classic_init_fact_view.ColumnPieceVisitTimes(ag_gr_p);
+	vector<vector<rowcount_t>> classic_visit_freq = optimizer->visit_frequency();
 	vector<vector<bool>> classic_storage_map = optimizer->CacheHottestGroup(classic_visit_freq);
 	
 	const View& classic_fact_view = LineorderView(classic_storage_map);
@@ -585,7 +479,6 @@ int main(int argc, char** argv) {
 
 	std::cout << "classic query time: "	<< get_time(begin, end) << " ms." << " classic io times: " << classic_io_times << std::endl << std::endl;
 	long classic_time = get_time(begin, end);
-*/
 	
 	// optimized query
 	clock_gettime(CLOCK_REALTIME, &begin);
@@ -596,8 +489,6 @@ int main(int argc, char** argv) {
 	clock_gettime(CLOCK_REALTIME, &end);
 	std::cout << "optimized time: " << get_time(begin, end) << " ms. " << std::endl;
 
-
-/*
 	std::cout << ">>>>storage map start<<<<" << std::endl;
 	for(int i = 0; i < optimized_storage_map.size(); i++) {
 		for(int j = 0 ; j < optimized_storage_map[i].size(); j++) {
@@ -606,7 +497,6 @@ int main(int argc, char** argv) {
 		std::cout << std::endl;
 	}
 	std::cout << ">>>>storage map end<<<<" << std::endl;
-*/
 		
 	long optimize_time = get_time(begin, end);
 
@@ -719,8 +609,7 @@ int main(int argc, char** argv) {
 	<< " q2_3_run_time = " << q2_3_run_time
 	<< " memory_width " << memory_width
 	<< " optimize_time = " << optimize_time
-//	<< " initial_time = " << initial_time
-//	<< " classic_time = " << classic_time
+	<< " classic_time = " << classic_time
 	<< " optimized_time = " << optimized_time
 	<< std::endl;
 	
