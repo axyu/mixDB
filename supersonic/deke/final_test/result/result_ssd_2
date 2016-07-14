@@ -1,0 +1,93 @@
+nohup: ignoring input
+query_proportion : 0.333333 0.333333 0.333333
+>>>>>>>>>>>>calculate start<<<<<<<<<<<<<<
+classic q2_1 begin caculate
+Thread id : Thread id : 140297489807104
+140287517058816
+Thread id : 140287500273408
+Thread id : 140287508666112
+Thread id : 140287517058816 does 255 times.
+Thread id : 140297489807104 does 251 times.
+Thread id : 140287508666112 does 252 times.
+Thread id : 140287500273408 does 246 times.
+row count: 280
+row count: 280
+row count: 280
+row count: 280
+classic q2_1 result
+classic q2_2 begin caculate
+Thread id : 140287500273408
+Thread id : 140287508666112
+Thread id : 140297489807104
+Thread id : 140287517058816
+Thread id : Thread id : 140287517058816 does 140287508666112251 times. does 
+250 times.
+Thread id : 140297489807104 does 252 times.
+Thread id : 140287500273408 does 251 times.
+row count: 56
+row count: 56
+row count: 56
+row count: 56
+classic q2_2 result
+classic q2_3 begin caculate
+Thread id : 140297489807104
+Thread id : 140287500273408
+Thread id : 140287517058816
+Thread id : 140287508666112
+Thread id : 140287500273408 does 249 times.
+Thread id : 140297489807104 does 250 times.
+Thread id : 140287517058816 does 256 times.
+Thread id : 140287508666112 does 249 times.
+row count: 7
+row count: 7
+row count: 7
+row count: 7
+classic q2_3 result
+classic query time: 291385 ms. classic io times: 46985216
+
+optimized time: 23002 ms. 
+optimized q2_1 begin caculate
+Thread id : 140287500273408
+Thread id : Thread id : 140287508666112
+140297489807104
+Thread id : 140287517058816
+Thread id : 140297489807104 does 257 times.
+Thread id : 140287508666112 does 243 times.
+Thread id : 140287500273408 does 252 times.
+Thread id : 140287517058816 does 252 times.
+row count: 280
+row count: 280
+row count: 280
+row count: 280
+optimized q2_1 result
+optimized q2_2 begin caculate
+Thread id : 140297489807104
+Thread id : 140287517058816
+Thread id : 140287500273408
+Thread id : 140287508666112
+Thread id : 140287508666112 does 253 times.
+Thread id : 140287500273408 does 252 times.
+Thread id : 140287517058816 does 250 times.
+Thread id : 140297489807104 does 249 times.
+row count: 56
+row count: 56
+row count: 56
+row count: 56
+optimized q2_2 result
+optimized q2_3 begin caculate
+Thread id : 140287500273408
+Thread id : Thread id : 140297489807104140287517058816
+
+Thread id : 140287508666112
+Thread id : 140287500273408 does 239 times.
+Thread id : 140287508666112 does 264 times.
+Thread id : 140297489807104 does 255 times.
+Thread id : 140287517058816 does 246 times.
+row count: 7
+row count: 7
+row count: 7
+row count: 7
+optimized q2_3 result
+optimized query time: 302484 ms. optimized io times: 46985216
+
+Result q2_1_run_time = 1 q2_2_run_time = 1 q2_3_run_time = 1 memory_width 16 optimize_time = 23002 classic_time = 291385 optimized_time = 302484
